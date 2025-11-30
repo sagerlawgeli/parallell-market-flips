@@ -485,8 +485,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                             </div>
                         )}
 
-                        {/* Footer / Profit / Actions */}
-                        <div className="pt-2 border-t border-border/50 flex justify-between items-center min-h-[32px]">
+                        {/* Footer / Cost, Return, Profit / Actions */}
+                        <div className="pt-2 border-t border-border/50 space-y-2">
                             {isEditing ? (
                                 <div className="flex items-center gap-2 w-full justify-end animate-in fade-in slide-in-from-top-1">
                                     <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-7 px-2">
@@ -498,10 +498,26 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 </div>
                             ) : (
                                 <>
-                                    <span className="text-xs text-muted-foreground">Net Profit</span>
-                                    <span className={cn("font-bold", currentProfit >= 0 ? "text-green-500" : "text-red-500")}>
-                                        {currentProfit > 0 ? "+" : ""}{formatCurrency(currentProfit, 'LYD')}
-                                    </span>
+                                    {/* Cost and Return */}
+                                    <div className="flex justify-between items-center text-xs">
+                                        <div className="flex gap-4">
+                                            <div>
+                                                <span className="text-muted-foreground">Cost: </span>
+                                                <span className="font-medium">{formatCurrency(valFiatAmount * valFiatRate, 'LYD')}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground">Return: </span>
+                                                <span className="font-medium">{formatCurrency(valUsdtAmount * valUsdtRate, 'LYD')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Net Profit */}
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-muted-foreground">Net Profit</span>
+                                        <span className={cn("font-bold", currentProfit >= 0 ? "text-green-500" : "text-red-500")}>
+                                            {currentProfit > 0 ? "+" : ""}{formatCurrency(currentProfit, 'LYD')}
+                                        </span>
+                                    </div>
                                 </>
                             )}
                         </div>
