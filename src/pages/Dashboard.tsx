@@ -146,7 +146,7 @@ export default function DashboardPage() {
 
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                <Card>
+                <Card className="border-t-primary">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('analytics.totalProfit')}</CardTitle>
                         <TrendingUp className="h-4 w-4 text-green-500" />
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground">{t('analytics.lifetime')}</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-primary">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('analytics.cashProfit')}</CardTitle>
                         <Banknote className="h-4 w-4 text-emerald-500" />
@@ -166,7 +166,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground">{t('analytics.cashTxns')}</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-primary">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('analytics.bankProfit')}</CardTitle>
                         <Building2 className="h-4 w-4 text-blue-500" />
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground">{t('analytics.bankTxns')}</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-primary">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('analytics.avgProfit')}</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground">{t('analytics.perTxn')}</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-primary">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('analytics.avgMargin')}</CardTitle>
                         <PieChart className="h-4 w-4 text-muted-foreground" />
@@ -199,7 +199,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Monthly Progress Card */}
-            <Card className="border-primary/20">
+            <Card className="border-primary/20 border-t-primary">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
@@ -269,7 +269,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Charts */}
-            <Card>
+            <Card className="border-t-primary">
                 <CardHeader>
                     <CardTitle>{t('analytics.monthlyPerf')}</CardTitle>
                     <p className="text-xs text-muted-foreground">{t('analytics.monthlyPerfDesc')}</p>

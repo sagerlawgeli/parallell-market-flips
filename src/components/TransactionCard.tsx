@@ -269,7 +269,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
     }
 
     return (
-        <Card className={cn("overflow-hidden transition-all hover:shadow-md", isEditing && "ring-2 ring-primary")}>
+        <Card className={cn("overflow-hidden transition-all hover:shadow-md border-t-primary", isEditing && "ring-2 ring-primary")}>
             <CardContent className="p-0">
                 <div className="flex items-stretch">
                     {/* Status Strip */}
