@@ -1,15 +1,33 @@
-import { Outlet, useLocation, Link } from "react-router-dom"
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom"
 import { Calculator, List, LayoutDashboard, LogOut } from "lucide-react"
 import { cn } from "../lib/utils"
+import { supabase } from "../lib/supabase"
+import { toast } from "sonner"
 
 export default function Layout() {
     const location = useLocation()
+    const navigate = useNavigate()
 
     const navItems = [
         { icon: List, label: "Ledger", path: "/" },
         { icon: Calculator, label: "Calculator", path: "/calculator" },
         { icon: LayoutDashboard, label: "Analytics", path: "/analytics" },
     ]
+
+    const handleLogout = async () => {
+        if (!confirm("Are you sure you want to logout?")) return
+
+        try {
+            const { error } = await supabase.auth.signOut()
+            if (error) throw error
+
+            toast.success("Logged out successfully")
+            navigate("/login")
+        } catch (error) {
+            console.error("Error logging out:", error)
+            toast.error("Failed to logout")
+        }
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -19,7 +37,11 @@ export default function Layout() {
                     <div className="flex items-center gap-2 font-bold text-lg">
                         <span className="text-primary">Arbitrage</span>Ledger
                     </div>
-                    <button className="p-2 text-muted-foreground hover:text-foreground">
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Logout"
+                    >
                         <LogOut className="h-5 w-5" />
                     </button>
                 </div>
