@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { formatCurrency } from "../lib/utils"
-import { TrendingUp, DollarSign, PieChart, Banknote, Building2 } from "lucide-react"
+import { TrendingUp, DollarSign, PieChart, Banknote, Building2, Target, Calendar } from "lucide-react"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
@@ -18,6 +18,13 @@ export default function DashboardPage() {
         avgMargin: 0
     })
     const [chartData, setChartData] = useState<any[]>([])
+    const [monthlyProgress, setMonthlyProgress] = useState({
+        currentMonthProfit: 0,
+        target: 18000,
+        percentComplete: 0,
+        daysRemaining: 0,
+        dailyAverageNeeded: 0
+    })
 
     useEffect(() => {
         fetchData()
@@ -60,14 +67,57 @@ export default function DashboardPage() {
                 avgMargin
             })
 
-            // Prepare Chart Data (Group by Date)
-            // Simple grouping by transaction index for now, or date if enough data
-            const chartData = data.map((t, index) => ({
-                name: `Tx ${index + 1}`,
-                profit: t.profit,
-                volume: t.fiat_amount * t.fiat_buy_rate,
-                date: new Date(t.created_at).toLocaleDateString()
-            }))
+            // Calculate Current Month Progress
+            const now = new Date()
+            const currentMonth = now.getMonth()
+            const currentYear = now.getFullYear()
+
+            const currentMonthTransactions = data.filter(t => {
+                const txDate = new Date(t.created_at)
+                return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear
+            })
+
+            const currentMonthProfit = currentMonthTransactions.reduce((sum, t) => sum + (t.profit || 0), 0)
+            const target = 18000
+            const percentComplete = (currentMonthProfit / target) * 100
+
+            // Calculate days remaining in month
+            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+            const daysRemaining = lastDayOfMonth - now.getDate()
+
+            // Calculate daily average needed to hit target
+            const remaining = Math.max(0, target - currentMonthProfit)
+            const dailyAverageNeeded = daysRemaining > 0 ? remaining / daysRemaining : 0
+
+            setMonthlyProgress({
+                currentMonthProfit,
+                target,
+                percentComplete,
+                daysRemaining,
+                dailyAverageNeeded
+            })
+
+            // Group by Month for Chart
+            const monthlyData: { [key: string]: number } = {}
+            data.forEach(t => {
+                const date = new Date(t.created_at)
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = 0
+                }
+                monthlyData[monthKey] += t.profit || 0
+            })
+
+            const chartData = Object.entries(monthlyData).map(([key, profit]) => {
+                const [year, month] = key.split('-')
+                const date = new Date(parseInt(year), parseInt(month) - 1)
+                return {
+                    month: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }),
+                    profit: profit,
+                    target: 18000
+                }
+            })
 
             setChartData(chartData)
 
@@ -146,23 +196,100 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
+            {/* Monthly Progress Card */}
+            <Card className="border-primary/20">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <Target className="h-5 w-5 text-primary" />
+                            Monthly Target Progress
+                        </CardTitle>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {monthlyProgress.daysRemaining} days left
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {/* Progress Bar */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                            <span className="text-2xl font-bold">
+                                {formatCurrency(monthlyProgress.currentMonthProfit, 'LYD')}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                                / {formatCurrency(monthlyProgress.target, 'LYD')}
+                            </span>
+                        </div>
+                        <div className="relative h-4 bg-muted rounded-full overflow-hidden">
+                            <div
+                                className={`h-full transition-all duration-500 ${monthlyProgress.percentComplete >= 100 ? 'bg-green-500' :
+                                    monthlyProgress.percentComplete >= 50 ? 'bg-yellow-500' :
+                                        'bg-red-500'
+                                    }`}
+                                style={{ width: `${Math.min(monthlyProgress.percentComplete, 100)}%` }}
+                            />
+                        </div>
+                        <div className="flex justify-between text-xs">
+                            <span className={`font-medium ${monthlyProgress.percentComplete >= 100 ? 'text-green-500' :
+                                monthlyProgress.percentComplete >= 50 ? 'text-yellow-500' :
+                                    'text-red-500'
+                                }`}>
+                                {monthlyProgress.percentComplete.toFixed(1)}% Complete
+                            </span>
+                            <span className="text-muted-foreground">
+                                {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')} remaining
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Daily Average Needed */}
+                    {monthlyProgress.percentComplete < 100 && monthlyProgress.daysRemaining > 0 && (
+                        <div className="pt-3 border-t border-border/50">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Daily avg. needed:</span>
+                                <span className="text-lg font-bold text-primary">
+                                    {formatCurrency(monthlyProgress.dailyAverageNeeded, 'LYD')}/day
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {monthlyProgress.percentComplete >= 100 && (
+                        <div className="pt-3 border-t border-border/50">
+                            <div className="flex items-center gap-2 text-green-500">
+                                <TrendingUp className="h-4 w-4" />
+                                <span className="text-sm font-medium">Target achieved! 🎉</span>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
             {/* Charts */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Profit History</CardTitle>
+                    <CardTitle>Monthly Performance</CardTitle>
+                    <p className="text-xs text-muted-foreground">Profit by month vs 18,000 LYD target</p>
                 </CardHeader>
                 <CardContent className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
+                        <BarChart data={chartData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                            <XAxis dataKey="date" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                            <XAxis dataKey="month" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                                itemStyle={{ color: '#fff' }}
+                                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                             />
-                            <Line type="monotone" dataKey="profit" stroke="#22c55e" strokeWidth={2} activeDot={{ r: 8 }} />
-                        </LineChart>
+                            <ReferenceLine y={18000} stroke="#888" strokeDasharray="3 3" label={{ value: 'Target', position: 'right', fill: '#888', fontSize: 12 }} />
+                            <Bar
+                                dataKey="profit"
+                                fill="#22c55e"
+                                radius={[4, 4, 0, 0]}
+                                name="Profit (LYD)"
+                            />
+                        </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
