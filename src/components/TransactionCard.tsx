@@ -61,6 +61,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         usdtAmount: transaction.usdtAmount.toString(),
         usdtRate: transaction.usdtRate.toString(),
         paymentMethod: transaction.paymentMethod,
+        createdAt: transaction.createdAt,
         notes: transaction.notes || ""
     })
 
@@ -72,6 +73,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             usdtAmount: transaction.usdtAmount.toString(),
             usdtRate: transaction.usdtRate.toString(),
             paymentMethod: transaction.paymentMethod,
+            createdAt: transaction.createdAt,
             notes: transaction.notes || ""
         })
         setIsEditing(false)
@@ -84,6 +86,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             parseFloat(editValues.usdtAmount) !== transaction.usdtAmount ||
             parseFloat(editValues.usdtRate) !== transaction.usdtRate ||
             editValues.paymentMethod !== transaction.paymentMethod ||
+            editValues.createdAt !== transaction.createdAt ||
             editValues.notes !== (transaction.notes || "")
         )
     }
@@ -111,6 +114,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                 usdt_amount: valUsdtAmount,
                 usdt_sell_rate: valUsdtRate,
                 payment_method: editValues.paymentMethod,
+                created_at: editValues.createdAt,
                 notes: editValues.notes,
                 updated_at: new Date().toISOString()
             }
@@ -131,6 +135,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                     usdtAmount: transaction.usdtAmount,
                     usdtRate: transaction.usdtRate,
                     paymentMethod: transaction.paymentMethod,
+                    createdAt: transaction.createdAt,
                     notes: transaction.notes
                 },
                 new: {
@@ -139,6 +144,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                     usdtAmount: valUsdtAmount,
                     usdtRate: valUsdtRate,
                     paymentMethod: editValues.paymentMethod,
+                    createdAt: editValues.createdAt,
                     notes: editValues.notes
                 }
             }
@@ -272,7 +278,16 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-lg">{transaction.type}</span>
                                 <span className="text-muted-foreground text-xs">•</span>
-                                <span className="text-sm text-muted-foreground">{transaction.createdAt}</span>
+                                {isEditing ? (
+                                    <Input
+                                        type="date"
+                                        value={editValues.createdAt}
+                                        onChange={e => setEditValues({ ...editValues, createdAt: e.target.value })}
+                                        className="h-6 text-xs w-32"
+                                    />
+                                ) : (
+                                    <span className="text-sm text-muted-foreground">{transaction.createdAt}</span>
+                                )}
                                 {isEditing ? (
                                     <div className="flex gap-1">
                                         <Button
