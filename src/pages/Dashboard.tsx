@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { formatCurrency } from "../lib/utils"
-import { TrendingUp, DollarSign, Activity, PieChart } from "lucide-react"
+import { TrendingUp, DollarSign, PieChart, Banknote, Building2 } from "lucide-react"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
     const [metrics, setMetrics] = useState({
         totalProfit: 0,
+        cashProfit: 0,
+        bankProfit: 0,
         totalVolume: 0,
         totalTransactions: 0,
         avgProfit: 0,
@@ -38,6 +40,8 @@ export default function DashboardPage() {
 
             // Calculate Metrics
             const totalProfit = data.reduce((sum, t) => sum + (t.profit || 0), 0)
+            const cashProfit = data.filter(t => t.payment_method === 'cash').reduce((sum, t) => sum + (t.profit || 0), 0)
+            const bankProfit = data.filter(t => t.payment_method === 'bank').reduce((sum, t) => sum + (t.profit || 0), 0)
             const totalVolume = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0) // Cost basis volume
             const totalTransactions = data.length
             const avgProfit = totalTransactions > 0 ? totalProfit / totalTransactions : 0
@@ -48,6 +52,8 @@ export default function DashboardPage() {
 
             setMetrics({
                 totalProfit,
+                cashProfit,
+                bankProfit,
                 totalVolume,
                 totalTransactions,
                 avgProfit,
@@ -87,7 +93,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Key Metrics */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
@@ -100,12 +106,22 @@ export default function DashboardPage() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Cash Profit</CardTitle>
+                        <Banknote className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.totalVolume, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">{metrics.totalTransactions} Transactions</p>
+                        <div className="text-2xl font-bold">{formatCurrency(metrics.cashProfit, 'LYD')}</div>
+                        <p className="text-xs text-muted-foreground">Cash transactions</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Bank Profit</CardTitle>
+                        <Building2 className="h-4 w-4 text-blue-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(metrics.bankProfit, 'LYD')}</div>
+                        <p className="text-xs text-muted-foreground">Bank transactions</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -131,48 +147,25 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts */}
-            <div className="grid gap-4 md:grid-cols-2">
-                <Card className="col-span-1">
-                    <CardHeader>
-                        <CardTitle>Profit History</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                <XAxis dataKey="date" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                                    itemStyle={{ color: '#fff' }}
-                                />
-                                <Line type="monotone" dataKey="profit" stroke="#22c55e" strokeWidth={2} activeDot={{ r: 8 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="col-span-1">
-                    <CardHeader>
-                        <CardTitle>Volume vs Profit</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                <XAxis dataKey="date" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                />
-                                <Bar dataKey="volume" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Volume (LYD)" />
-                                <Bar dataKey="profit" fill="#22c55e" radius={[4, 4, 0, 0]} name="Profit (LYD)" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Profit History</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                            <XAxis dataKey="date" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                                itemStyle={{ color: '#fff' }}
+                            />
+                            <Line type="monotone" dataKey="profit" stroke="#22c55e" strokeWidth={2} activeDot={{ r: 8 }} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
         </div>
     )
 }
