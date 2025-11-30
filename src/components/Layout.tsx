@@ -6,8 +6,8 @@ export default function Layout() {
     const location = useLocation()
 
     const navItems = [
-        { icon: Calculator, label: "Calculator", path: "/" },
-        { icon: List, label: "Ledger", path: "/ledger" },
+        { icon: List, label: "Ledger", path: "/" },
+        { icon: Calculator, label: "Calculator", path: "/calculator" },
         { icon: LayoutDashboard, label: "Analytics", path: "/analytics" },
     ]
 

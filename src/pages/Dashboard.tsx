@@ -26,6 +26,7 @@ export default function DashboardPage() {
             const { data, error } = await supabase
                 .from('transactions')
                 .select('*')
+                .eq('status', 'complete') // Only count completed transactions
                 .order('created_at', { ascending: true }) // Oldest first for charts
 
             if (error) throw error

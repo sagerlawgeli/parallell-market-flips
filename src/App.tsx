@@ -38,8 +38,8 @@ function App() {
         <Route path="/login" element={!session ? <AuthPage /> : <Navigate to="/" />} />
 
         <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
-          <Route index element={<CalculatorPage />} />
-          <Route path="ledger" element={<TransactionListPage />} />
+          <Route index element={<TransactionListPage />} />
+          <Route path="calculator" element={<CalculatorPage />} />
           <Route path="analytics" element={<DashboardPage />} />
         </Route>
       </Routes>
