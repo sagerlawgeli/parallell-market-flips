@@ -49,7 +49,7 @@ export async function getCompositeRate(base: 'GBP' | 'EUR'): Promise<{
 }> {
     // If base is EUR, we just need EUR -> USDT
     if (base === 'EUR') {
-        const cryptoRate = await getCryptoPrice('EURUSDT')
+        const cryptoRate = await getCryptoPrice()
         return {
             forexRate: 1,
             cryptoRate,
@@ -60,7 +60,7 @@ export async function getCompositeRate(base: 'GBP' | 'EUR'): Promise<{
     // If base is GBP, we need GBP -> EUR -> USDT
     const [forexRate, cryptoRate] = await Promise.all([
         getForexRate('GBP', 'EUR'),
-        getCryptoPrice('EURUSDT')
+        getCryptoPrice()
     ])
 
     return {
