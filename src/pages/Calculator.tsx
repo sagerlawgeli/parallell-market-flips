@@ -93,7 +93,6 @@ export default function CalculatorPage() {
 
         // Gross amounts (before fees are applied to the conversion rate) for fee calculation
         let grossFiatAmount = 0
-        let grossEurAmount = 0
         let grossUsdtAmount = 0
 
         if (targetMode === "USDT") {
@@ -105,11 +104,9 @@ export default function CalculatorPage() {
             grossFiatAmount = valAmount / (currency === "GBP" ? (valForexRate * valCryptoRate) : valCryptoRate)
 
             if (currency === "GBP") {
-                grossEurAmount = grossFiatAmount * valForexRate
                 calcFiatAmount = valAmount / effectiveTotalRate
                 calcEurAmount = calcFiatAmount * effectiveForexRate
             } else {
-                grossEurAmount = grossFiatAmount // It is EUR
                 calcFiatAmount = valAmount / effectiveTotalRate
                 calcEurAmount = calcFiatAmount // It is EUR
             }
@@ -122,72 +119,15 @@ export default function CalculatorPage() {
             grossUsdtAmount = valAmount * (currency === "GBP" ? (valForexRate * valCryptoRate) : valCryptoRate)
 
             if (currency === "GBP") {
-                grossEurAmount = grossFiatAmount * valForexRate
                 calcUsdtAmount = valAmount * effectiveTotalRate
                 calcEurAmount = calcFiatAmount * effectiveForexRate
             } else {
-                grossEurAmount = grossFiatAmount // It is EUR
                 calcUsdtAmount = valAmount * effectiveTotalRate
                 calcEurAmount = calcFiatAmount // It is EUR
             }
         }
 
-        // Calculate fees based on the difference between gross and net amounts, converted to LYD
-        let revolutFeeInFiat = 0
-        if (currency === "GBP") {
-            // If targetMode is FIAT, we start with grossFiatAmount (GBP).
-            // The fee reduces the EUR received.
-            // Gross EUR = grossFiatAmount * valForexRate
-            // Net EUR = calcFiatAmount * effectiveForexRate
-            // The difference in EUR is the fee.
-            // If targetMode is USDT, we end up with calcFiatAmount (GBP).
-            // The fee increases the GBP needed.
-            // Gross GBP needed = grossFiatAmount
-            // Net GBP needed = calcFiatAmount
-            // The difference in GBP is the fee.
-            revolutFeeInFiat = Math.abs(grossFiatAmount * valForexRate - calcFiatAmount * effectiveForexRate) / valForexRate; // Fee in GBP
-            if (targetMode === "USDT") {
-                revolutFeeInFiat = Math.abs(calcFiatAmount - grossFiatAmount); // Fee in GBP
-            } else {
-                revolutFeeInFiat = (valAmount * valRevolutFeePct / 100); // Fee in GBP
-            }
-        }
-
-        let krakenFeeInEur = 0
-        if (currency === "GBP") {
-            // If targetMode is FIAT, we convert GBP to EUR, then EUR to USDT.
-            // Gross EUR = valAmount * valForexRate
-            // Net EUR = calcEurAmount
-            // The fee is applied to the EUR amount before converting to USDT.
-            // The difference in USDT is the fee.
-            // If targetMode is USDT, we convert USDT to EUR, then EUR to GBP.
-            // Gross EUR = grossUsdtAmount / valCryptoRate
-            // Net EUR = calcEurAmount
-            // The fee is applied to the EUR amount before converting to USDT.
-            // The difference in EUR is the fee.
-            if (targetMode === "USDT") {
-                krakenFeeInEur = Math.abs(grossUsdtAmount / valCryptoRate - calcUsdtAmount / effectiveCryptoRate); // Fee in EUR
-            } else {
-                krakenFeeInEur = Math.abs(calcEurAmount - (valAmount * effectiveForexRate * (1 - valKrakenFeePct / 100))); // Fee in EUR
-                krakenFeeInEur = (valAmount * effectiveForexRate * valKrakenFeePct / 100); // Fee in EUR
-            }
-        } else { // currency === "EUR"
-            if (targetMode === "USDT") {
-                krakenFeeInEur = Math.abs(grossUsdtAmount / valCryptoRate - calcUsdtAmount / effectiveCryptoRate); // Fee in EUR
-            } else {
-                krakenFeeInEur = (valAmount * valKrakenFeePct / 100); // Fee in EUR
-            }
-        }
-
-        // A simpler way to calculate total fees:
-        // Calculate the cost if no fees were applied to the rates
-        const grossCost = grossFiatAmount * valFiatBuyRate;
-        // Calculate the revenue if no fees were applied to the rates
-        const grossRevenue = grossUsdtAmount * valUsdtSellRate;
-
-        // The actual cost and revenue already reflect the fees implicitly in the effective rates.
-        // So, the total fees can be seen as the difference in profit between gross and net.
-        // Or, more directly, the difference in the amount of fiat/USDT due to fees, converted to LYD.
+        // Calculate total fees in LYD
 
         let totalFeesInLYD = 0;
         if (targetMode === "FIAT") {

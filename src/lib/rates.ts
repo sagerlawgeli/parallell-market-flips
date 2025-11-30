@@ -1,4 +1,4 @@
-export async function getCryptoPrice(pair: string = 'EURUSDT'): Promise<number> {
+export async function getCryptoPrice(): Promise<number> {
     try {
         // 1. Try CoinGecko (USDT)
         const proxyUrl = 'https://api.allorigins.win/raw?url='
