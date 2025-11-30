@@ -1,17 +1,19 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom"
-import { Calculator, List, LayoutDashboard, LogOut } from "lucide-react"
+import { Calculator, List, LayoutDashboard, LogOut, Languages } from "lucide-react"
 import { cn } from "../lib/utils"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
+import { useTranslation } from "react-i18next"
 
 export default function Layout() {
     const location = useLocation()
     const navigate = useNavigate()
+    const { t, i18n } = useTranslation()
 
     const navItems = [
-        { icon: List, label: "Ledger", path: "/" },
-        { icon: Calculator, label: "Calculator", path: "/calculator" },
-        { icon: LayoutDashboard, label: "Analytics", path: "/analytics" },
+        { icon: List, label: t('nav.ledger'), path: "/" },
+        { icon: Calculator, label: t('nav.calculator'), path: "/calculator" },
+        { icon: LayoutDashboard, label: t('nav.analytics'), path: "/analytics" },
     ]
 
     const handleLogout = async () => {
@@ -29,6 +31,12 @@ export default function Layout() {
         }
     }
 
+    const toggleLanguage = () => {
+        const newLang = i18n.language === 'en' ? 'ar' : 'en'
+        i18n.changeLanguage(newLang)
+        localStorage.setItem('language', newLang)
+    }
+
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
             {/* Header */}
@@ -37,13 +45,22 @@ export default function Layout() {
                     <div className="flex items-center gap-2 font-bold text-lg">
                         <span className="text-primary">Arbitrage</span>Ledger
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                        title="Logout"
-                    >
-                        <LogOut className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={toggleLanguage}
+                            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                            title={i18n.language === 'en' ? 'العربية' : 'English'}
+                        >
+                            <Languages className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                            title={t('common.logout')}
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
             </header>
 

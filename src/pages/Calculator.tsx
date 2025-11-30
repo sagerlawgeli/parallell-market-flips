@@ -6,8 +6,10 @@ import { toast } from "sonner"
 import { ArrowRightLeft, TrendingUp, RefreshCw, Banknote, Building2 } from "lucide-react"
 import { formatCurrency } from "../lib/utils"
 import { supabase } from "../lib/supabase"
+import { useTranslation } from "react-i18next"
 
 export default function CalculatorPage() {
+    const { t } = useTranslation()
     const [currency, setCurrency] = useState<"GBP" | "EUR">("GBP")
     const [targetMode, setTargetMode] = useState<"USDT" | "FIAT">("FIAT") // Default to FIAT input (I have X GBP)
 
@@ -206,16 +208,16 @@ export default function CalculatorPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Calculator</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('calculator.title')}</h1>
                 <p className="text-muted-foreground">
-                    Quickly check profitability before buying.
+                    {t('calculator.subtitle')}
                 </p>
             </div>
 
             <Card className="border-t-4 border-t-primary">
                 <CardHeader>
                     <div className="flex justify-between items-center">
-                        <CardTitle>New Transaction</CardTitle>
+                        <CardTitle>{t('calculator.newTransaction')}</CardTitle>
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -236,7 +238,7 @@ export default function CalculatorPage() {
                             </Button>
                         </div>
                     </div>
-                    <CardDescription>Enter rates and amounts to calculate profit.</CardDescription>
+                    <CardDescription>{t('calculator.enterRates')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
 
@@ -245,7 +247,7 @@ export default function CalculatorPage() {
                         <div className="flex items-end gap-2">
                             <div className="space-y-2 flex-1">
                                 <label className="text-sm font-medium">
-                                    Amount ({targetMode === "USDT" ? "USDT" : currency})
+                                    {t('calculator.amount')} ({targetMode === "USDT" ? "USDT" : currency})
                                 </label>
                                 <Input
                                     type="number"
@@ -268,7 +270,7 @@ export default function CalculatorPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">
-                                    Buy Price (LYD per {currency})
+                                    {t('calculator.buy')} ({t('calculator.rate')} LYD / {currency})
                                 </label>
                                 <Input
                                     type="number"
@@ -279,7 +281,7 @@ export default function CalculatorPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">
-                                    Sell Price (LYD per USDT)
+                                    {t('calculator.sell')} ({t('calculator.rate')} LYD / USDT)
                                 </label>
                                 <Input
                                     type="number"
@@ -293,7 +295,7 @@ export default function CalculatorPage() {
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <label className="text-sm font-medium text-muted-foreground">
-                                    Exchange Rates & Fees
+                                    {t('calculator.exchangeRatesFees')}
                                 </label>
                                 <Button
                                     variant="ghost"
@@ -307,14 +309,14 @@ export default function CalculatorPage() {
                                     ) : (
                                         <RefreshCw className="h-3 w-3 mr-1" />
                                     )}
-                                    Fetch Live
+                                    {t('calculator.fetchLive')}
                                 </Button>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 {currency === "GBP" && (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] text-muted-foreground">Revolut Rate (GBP→EUR)</label>
+                                        <label className="text-[10px] text-muted-foreground">{t('calculator.revolutRate')}</label>
                                         <Input
                                             type="number"
                                             value={forexRate}
@@ -323,7 +325,7 @@ export default function CalculatorPage() {
                                     </div>
                                 )}
                                 <div className={`space-y-1 ${currency === "EUR" ? "col-span-2" : ""}`}>
-                                    <label className="text-[10px] text-muted-foreground">Kraken Rate (EUR→USDT)</label>
+                                    <label className="text-[10px] text-muted-foreground">{t('calculator.krakenRate')}</label>
                                     <Input
                                         type="number"
                                         value={cryptoRate}
@@ -333,7 +335,7 @@ export default function CalculatorPage() {
 
                                 {currency === "GBP" && (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] text-muted-foreground">Revolut Fee (%)</label>
+                                        <label className="text-[10px] text-muted-foreground">{t('calculator.revolutFee')}</label>
                                         <Input
                                             type="number"
                                             value={revolutFee}
@@ -343,7 +345,7 @@ export default function CalculatorPage() {
                                     </div>
                                 )}
                                 <div className={`space-y-1 ${currency === "EUR" ? "col-span-2" : ""}`}>
-                                    <label className="text-[10px] text-muted-foreground">Kraken Fee (%)</label>
+                                    <label className="text-[10px] text-muted-foreground">{t('calculator.krakenFee')}</label>
                                     <Input
                                         type="number"
                                         value={krakenFee}
@@ -355,7 +357,7 @@ export default function CalculatorPage() {
 
                             {currency === "GBP" && (
                                 <p className="text-[10px] text-muted-foreground text-right mt-1">
-                                    Effective Rate: 1 GBP ≈ {((parseFloat(forexRate) || 0) * (1 - (parseFloat(revolutFee) || 0) / 100) * (parseFloat(cryptoRate) || 0) * (1 - (parseFloat(krakenFee) || 0) / 100)).toFixed(4)} USDT
+                                    {t('calculator.effectiveRate')}: 1 GBP ≈ {((parseFloat(forexRate) || 0) * (1 - (parseFloat(revolutFee) || 0) / 100) * (parseFloat(cryptoRate) || 0) * (1 - (parseFloat(krakenFee) || 0) / 100)).toFixed(4)} USDT
                                 </p>
                             )}
                         </div>
@@ -364,9 +366,9 @@ export default function CalculatorPage() {
                     {/* Notes */}
                     <div className="pt-4 border-t">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Notes (Optional)</label>
+                            <label className="text-sm font-medium">{t('calculator.notes')}</label>
                             <Input
-                                placeholder="Add any details..."
+                                placeholder={t('calculator.notesPlaceholder')}
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
@@ -376,43 +378,43 @@ export default function CalculatorPage() {
                     {/* Results Section */}
                     <div className="rounded-xl bg-muted/50 p-6 space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Input {currency}</span>
+                            <span className="text-muted-foreground">{t('calculator.input')} {currency}</span>
                             <span className="font-mono font-medium">{results.fiatAmount.toFixed(2)}</span>
                         </div>
 
                         {currency === "GBP" && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Converted EUR (after fees)</span>
+                                <span className="text-muted-foreground">{t('calculator.converted')} EUR {t('calculator.afterFees')}</span>
                                 <span className="font-mono font-medium">{results.eurAmount.toFixed(2)}</span>
                             </div>
                         )}
 
                         <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Resulting USDT (after fees)</span>
+                            <span className="text-muted-foreground">{t('calculator.resulting')} USDT {t('calculator.afterFees')}</span>
                             <span className="font-mono font-medium">{results.usdtAmount.toFixed(2)}</span>
                         </div>
 
                         <div className="border-t border-border/50 my-2"></div>
 
                         <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Total Cost (LYD)</span>
+                            <span className="text-muted-foreground">{t('calculator.cost')} (LYD)</span>
                             <span className="font-mono font-medium">{formatCurrency(results.cost, 'LYD')}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Total Return (LYD)</span>
+                            <span className="text-muted-foreground">{t('calculator.return')} (LYD)</span>
                             <span className="font-mono font-medium">{formatCurrency(results.revenue, 'LYD')}</span>
                         </div>
 
                         <div className="border-t border-border/50 my-2"></div>
 
                         <div className="flex justify-between items-end">
-                            <span className="font-bold text-lg">Profit</span>
+                            <span className="font-bold text-lg">{t('calculator.profit')}</span>
                             <div className="text-right">
                                 <div className={`text-2xl font-bold ${results.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                     {formatCurrency(results.profit, 'LYD')}
                                 </div>
                                 <div className={`text-xs ${results.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {results.profitMargin.toFixed(2)}% margin
+                                    {results.profitMargin.toFixed(2)}% {t('calculator.margin')}
                                 </div>
                             </div>
                         </div>
@@ -429,7 +431,7 @@ export default function CalculatorPage() {
                         ) : (
                             <TrendingUp className="mr-2 h-5 w-5" />
                         )}
-                        {isSaving ? "Saving..." : "Save Transaction"}
+                        {isSaving ? t('calculator.saving') : t('calculator.save')}
                     </Button>
                 </CardContent>
             </Card>

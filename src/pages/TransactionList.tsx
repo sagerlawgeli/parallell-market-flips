@@ -3,8 +3,10 @@ import { TransactionCard, type Transaction } from "../components/TransactionCard
 import { supabase } from "../lib/supabase"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import { useTranslation } from "react-i18next"
 
 export default function TransactionListPage() {
+    const { t } = useTranslation()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -52,17 +54,17 @@ export default function TransactionListPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Ledger</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('ledger.title')}</h1>
                 <p className="text-muted-foreground">
-                    History of all your arbitrage transactions.
+                    {t('ledger.subtitle')}
                 </p>
             </div>
 
             <div className="grid gap-4">
                 {loading ? (
-                    <div className="text-center py-10 text-muted-foreground">Loading...</div>
+                    <div className="text-center py-10 text-muted-foreground">{t('common.loading')}</div>
                 ) : transactions.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground">No transactions found.</div>
+                    <div className="text-center py-10 text-muted-foreground">{t('ledger.noTransactions')}</div>
                 ) : (
                     transactions.map((txn) => (
                         <TransactionCard key={txn.id} transaction={txn} onStatusChange={fetchTransactions} />

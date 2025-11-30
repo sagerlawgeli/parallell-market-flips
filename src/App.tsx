@@ -7,10 +7,13 @@ import CalculatorPage from "./pages/Calculator"
 import TransactionListPage from "./pages/TransactionList"
 import DashboardPage from "./pages/Dashboard"
 import AuthPage from "./pages/Auth"
+import "./i18n"
+import { useTranslation } from "react-i18next"
 
 function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const { i18n } = useTranslation()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,6 +29,12 @@ function App() {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Update document direction based on language
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.lang = i18n.language
+  }, [i18n.language])
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>

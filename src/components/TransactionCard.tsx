@@ -15,6 +15,7 @@ import { Input } from "./ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
+import { useTranslation } from "react-i18next"
 
 export type TransactionStatus = 'planned' | 'in_progress' | 'complete' | 'cancelled'
 
@@ -42,14 +43,16 @@ interface TransactionCardProps {
     onStatusChange?: () => void
 }
 
-const statusConfig = {
-    planned: { label: "Planned", icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10" },
-    in_progress: { label: "In Progress", icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10" },
-    complete: { label: "Complete", icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
-    cancelled: { label: "Cancelled", icon: XCircle, color: "text-red-500", bg: "bg-red-500/10" },
-}
-
 export function TransactionCard({ transaction, onStatusChange }: TransactionCardProps) {
+    const { t } = useTranslation()
+
+    const statusConfig = {
+        planned: { label: t('transaction.planned'), icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10" },
+        in_progress: { label: t('transaction.inProgress'), icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10" },
+        complete: { label: t('transaction.complete'), icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
+        cancelled: { label: t('transaction.cancelled'), icon: XCircle, color: "text-red-500", bg: "bg-red-500/10" },
+    }
+
     const config = statusConfig[transaction.status] || statusConfig['planned']
     const StatusIcon = config.icon
 
@@ -247,7 +250,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
     }
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this transaction? This action cannot be undone.")) return
+        if (!confirm(t('transaction.confirmDelete'))) return
 
         try {
             const { error } = await supabase
@@ -296,7 +299,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                             onClick={() => setEditValues({ ...editValues, paymentMethod: "bank" })}
                                             className="h-5 text-[10px] px-2"
                                         >
-                                            Bank
+                                            {t('calculator.bank')}
                                         </Button>
                                         <Button
                                             size="sm"
@@ -304,13 +307,13 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                             onClick={() => setEditValues({ ...editValues, paymentMethod: "cash" })}
                                             className="h-5 text-[10px] px-2"
                                         >
-                                            Cash
+                                            {t('calculator.cash')}
                                         </Button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
                                         {transaction.paymentMethod === 'cash' ? <Banknote className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
-                                        {transaction.paymentMethod}
+                                        {transaction.paymentMethod === 'cash' ? t('calculator.cash') : t('calculator.bank')}
                                     </div>
                                 )}
                             </div>
@@ -325,19 +328,19 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         </button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('common.update')}</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={() => handleStatusUpdate('planned')}>
-                                            <Clock className="mr-2 h-4 w-4 text-blue-500" /> Planned
+                                            <Clock className="mr-2 h-4 w-4 text-blue-500" /> {t('transaction.planned')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
-                                            <Clock className="mr-2 h-4 w-4 text-orange-500" /> In Progress
+                                            <Clock className="mr-2 h-4 w-4 text-orange-500" /> {t('transaction.inProgress')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleStatusUpdate('complete')}>
-                                            <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> Complete
+                                            <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> {t('transaction.complete')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleStatusUpdate('cancelled')}>
-                                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> Cancelled
+                                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> {t('transaction.cancelled')}
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -356,7 +359,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -366,7 +369,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                         {/* Amounts (Editable) */}
                         <div className="flex items-center justify-between text-sm gap-4">
                             <div className="flex-1">
-                                <div className="text-muted-foreground text-xs mb-0.5">Buy</div>
+                                <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.buy')}</div>
                                 {isEditing ? (
                                     <div className="space-y-1">
                                         <Input
@@ -400,7 +403,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                             <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
 
                             <div className="flex-1 text-right">
-                                <div className="text-muted-foreground text-xs mb-0.5">Sell</div>
+                                <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.sell')}</div>
                                 {isEditing ? (
                                     <div className="space-y-1 flex flex-col items-end">
                                         <Input
@@ -441,7 +444,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     onChange={() => handleStepToggle('stepFiatAcquired')}
                                     className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
                                 />
-                                <span className={transaction.stepFiatAcquired ? "text-foreground font-medium" : "text-muted-foreground"}>Fiat Acquired</span>
+                                <span className={transaction.stepFiatAcquired ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatAcquired')}</span>
                             </label>
                             <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
                                 <input
@@ -450,7 +453,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     onChange={() => handleStepToggle('stepUsdtSold')}
                                     className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
                                 />
-                                <span className={transaction.stepUsdtSold ? "text-foreground font-medium" : "text-muted-foreground"}>USDT Sold</span>
+                                <span className={transaction.stepUsdtSold ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.usdtSold')}</span>
                             </label>
                             <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
                                 <input
@@ -459,7 +462,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     onChange={() => handleStepToggle('stepFiatPaid')}
                                     className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
                                 />
-                                <span className={transaction.stepFiatPaid ? "text-foreground font-medium" : "text-muted-foreground"}>Fiat Paid</span>
+                                <span className={transaction.stepFiatPaid ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatPaid')}</span>
                             </label>
                         </div>
 
@@ -468,12 +471,12 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                             <div className="pt-2 border-t border-border/50">
                                 {isEditing ? (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Notes</label>
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('calculator.notes')}</label>
                                         <Textarea
                                             value={editValues.notes}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditValues({ ...editValues, notes: e.target.value })}
                                             className="text-xs min-h-[60px]"
-                                            placeholder="Add notes..."
+                                            placeholder={t('calculator.notesPlaceholder')}
                                         />
                                     </div>
                                 ) : (
@@ -490,10 +493,10 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                             {isEditing ? (
                                 <div className="flex items-center gap-2 w-full justify-end animate-in fade-in slide-in-from-top-1">
                                     <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-7 px-2">
-                                        <X className="h-3 w-3 mr-1" /> Cancel
+                                        <X className="h-3 w-3 mr-1" /> {t('common.cancel')}
                                     </Button>
                                     <Button size="sm" onClick={handleSave} className="h-7 px-2">
-                                        <Save className="h-3 w-3 mr-1" /> Update
+                                        <Save className="h-3 w-3 mr-1" /> {t('common.update')}
                                     </Button>
                                 </div>
                             ) : (
@@ -502,18 +505,18 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     <div className="flex justify-between items-center text-xs">
                                         <div className="flex gap-4">
                                             <div>
-                                                <span className="text-muted-foreground">Cost: </span>
+                                                <span className="text-muted-foreground">{t('transaction.cost')}: </span>
                                                 <span className="font-medium">{formatCurrency(valFiatAmount * valFiatRate, 'LYD')}</span>
                                             </div>
                                             <div>
-                                                <span className="text-muted-foreground">Return: </span>
+                                                <span className="text-muted-foreground">{t('transaction.return')}: </span>
                                                 <span className="font-medium">{formatCurrency(valUsdtAmount * valUsdtRate, 'LYD')}</span>
                                             </div>
                                         </div>
                                     </div>
                                     {/* Net Profit */}
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs text-muted-foreground">Net Profit</span>
+                                        <span className="text-xs text-muted-foreground">{t('transaction.netProfit')}</span>
                                         <span className={cn("font-bold", currentProfit >= 0 ? "text-green-500" : "text-red-500")}>
                                             {currentProfit > 0 ? "+" : ""}{formatCurrency(currentProfit, 'LYD')}
                                         </span>

@@ -5,8 +5,10 @@ import { TrendingUp, DollarSign, PieChart, Banknote, Building2, Target, Calendar
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { useTranslation } from "react-i18next"
 
 export default function DashboardPage() {
+    const { t } = useTranslation()
     const [loading, setLoading] = useState(true)
     const [metrics, setMetrics] = useState({
         totalProfit: 0,
@@ -136,9 +138,9 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t('analytics.title')}</h1>
                 <p className="text-muted-foreground">
-                    Overview of your performance.
+                    {t('analytics.subtitle')}
                 </p>
             </div>
 
@@ -146,52 +148,52 @@ export default function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('analytics.totalProfit')}</CardTitle>
                         <TrendingUp className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(metrics.totalProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">Lifetime earnings</p>
+                        <p className="text-xs text-muted-foreground">{t('analytics.lifetime')}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Cash Profit</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('analytics.cashProfit')}</CardTitle>
                         <Banknote className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(metrics.cashProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">Cash transactions</p>
+                        <p className="text-xs text-muted-foreground">{t('analytics.cashTxns')}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Bank Profit</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('analytics.bankProfit')}</CardTitle>
                         <Building2 className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(metrics.bankProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">Bank transactions</p>
+                        <p className="text-xs text-muted-foreground">{t('analytics.bankTxns')}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg. Profit / Txn</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('analytics.avgProfit')}</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(metrics.avgProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">Per transaction</p>
+                        <p className="text-xs text-muted-foreground">{t('analytics.perTxn')}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg. Margin</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('analytics.avgMargin')}</CardTitle>
                         <PieChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{metrics.avgMargin.toFixed(2)}%</div>
-                        <p className="text-xs text-muted-foreground">Return on investment</p>
+                        <p className="text-xs text-muted-foreground">{t('analytics.roi')}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -202,11 +204,11 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
                             <Target className="h-5 w-5 text-primary" />
-                            Monthly Target Progress
+                            {t('analytics.monthlyTarget')}
                         </CardTitle>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            {monthlyProgress.daysRemaining} days left
+                            {monthlyProgress.daysRemaining} {t('analytics.daysLeft')}
                         </div>
                     </div>
                 </CardHeader>
@@ -235,10 +237,10 @@ export default function DashboardPage() {
                                 monthlyProgress.percentComplete >= 50 ? 'text-yellow-500' :
                                     'text-red-500'
                                 }`}>
-                                {monthlyProgress.percentComplete.toFixed(1)}% Complete
+                                {monthlyProgress.percentComplete.toFixed(1)}% {t('analytics.complete')}
                             </span>
                             <span className="text-muted-foreground">
-                                {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')} remaining
+                                {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')} {t('analytics.remaining')}
                             </span>
                         </div>
                     </div>
@@ -247,9 +249,9 @@ export default function DashboardPage() {
                     {monthlyProgress.percentComplete < 100 && monthlyProgress.daysRemaining > 0 && (
                         <div className="pt-3 border-t border-border/50">
                             <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Daily avg. needed:</span>
+                                <span className="text-sm text-muted-foreground">{t('analytics.dailyAvg')}</span>
                                 <span className="text-lg font-bold text-primary">
-                                    {formatCurrency(monthlyProgress.dailyAverageNeeded, 'LYD')}/day
+                                    {formatCurrency(monthlyProgress.dailyAverageNeeded, 'LYD')}{t('analytics.perDay')}
                                 </span>
                             </div>
                         </div>
@@ -259,7 +261,7 @@ export default function DashboardPage() {
                         <div className="pt-3 border-t border-border/50">
                             <div className="flex items-center gap-2 text-green-500">
                                 <TrendingUp className="h-4 w-4" />
-                                <span className="text-sm font-medium">Target achieved! 🎉</span>
+                                <span className="text-sm font-medium">{t('analytics.targetAchieved')}</span>
                             </div>
                         </div>
                     )}
@@ -269,8 +271,8 @@ export default function DashboardPage() {
             {/* Charts */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Monthly Performance</CardTitle>
-                    <p className="text-xs text-muted-foreground">Profit by month vs 18,000 LYD target</p>
+                    <CardTitle>{t('analytics.monthlyPerf')}</CardTitle>
+                    <p className="text-xs text-muted-foreground">{t('analytics.monthlyPerfDesc')}</p>
                 </CardHeader>
                 <CardContent className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
