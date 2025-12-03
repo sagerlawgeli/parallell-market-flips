@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "./ui/card"
 import { formatCurrency, cn } from "../lib/utils"
-import { ArrowRight, ArrowLeft, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote } from "lucide-react"
+import { ArrowRight, ArrowLeft, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote, Lock, Unlock } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
+import { useUserRole } from "../hooks/useUserRole"
 
 export type TransactionStatus = 'planned' | 'in_progress' | 'complete' | 'cancelled'
 
@@ -31,6 +32,7 @@ export interface Transaction {
     profit: number
     createdAt: string
     notes?: string
+    isPrivate: boolean
 
     // Progress Steps
     stepFiatAcquired: boolean
@@ -46,6 +48,7 @@ interface TransactionCardProps {
 export function TransactionCard({ transaction, onStatusChange }: TransactionCardProps) {
     const { t, i18n } = useTranslation()
     const arabic = i18n.language === 'ar'
+    const { isAdmin } = useUserRole()
 
     const statusConfig = {
         planned: { label: t('transaction.planned'), icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -66,7 +69,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         usdtRate: transaction.usdtRate.toString(),
         paymentMethod: transaction.paymentMethod,
         createdAt: transaction.createdAt,
-        notes: transaction.notes || ""
+        notes: transaction.notes || "",
+        isPrivate: transaction.isPrivate
     })
 
     // Reset edit values when transaction changes
@@ -78,7 +82,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             usdtRate: transaction.usdtRate.toString(),
             paymentMethod: transaction.paymentMethod,
             createdAt: transaction.createdAt,
-            notes: transaction.notes || ""
+            notes: transaction.notes || "",
+            isPrivate: transaction.isPrivate
         })
         setIsEditing(false)
     }, [transaction])
@@ -91,7 +96,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             parseFloat(editValues.usdtRate) !== transaction.usdtRate ||
             editValues.paymentMethod !== transaction.paymentMethod ||
             editValues.createdAt !== transaction.createdAt ||
-            editValues.notes !== (transaction.notes || "")
+            editValues.notes !== (transaction.notes || "") ||
+            editValues.isPrivate !== transaction.isPrivate
         )
     }
 
@@ -120,6 +126,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                 payment_method: editValues.paymentMethod,
                 created_at: editValues.createdAt,
                 notes: editValues.notes,
+                is_private: editValues.isPrivate,
                 updated_at: new Date().toISOString()
             }
 
@@ -140,7 +147,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                     usdtRate: transaction.usdtRate,
                     paymentMethod: transaction.paymentMethod,
                     createdAt: transaction.createdAt,
-                    notes: transaction.notes
+                    notes: transaction.notes,
+                    isPrivate: transaction.isPrivate
                 },
                 new: {
                     fiatAmount: valFiatAmount,
@@ -149,7 +157,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                     usdtRate: valUsdtRate,
                     paymentMethod: editValues.paymentMethod,
                     createdAt: editValues.createdAt,
-                    notes: editValues.notes
+                    notes: editValues.notes,
+                    isPrivate: editValues.isPrivate
                 }
             }
 
@@ -475,19 +484,48 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                         {(transaction.notes || isEditing) && (
                             <div className="pt-2 border-t border-border/50">
                                 {isEditing ? (
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('calculator.notes')}</label>
-                                        <Textarea
-                                            value={editValues.notes}
-                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditValues({ ...editValues, notes: e.target.value })}
-                                            className="text-xs min-h-[60px]"
-                                            placeholder={t('calculator.notesPlaceholder')}
-                                        />
+                                    <div className="space-y-2">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('calculator.notes')}</label>
+                                            <Textarea
+                                                value={editValues.notes}
+                                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditValues({ ...editValues, notes: e.target.value })}
+                                                className="text-xs min-h-[60px]"
+                                                placeholder={t('calculator.notesPlaceholder')}
+                                            />
+                                        </div>
+
+                                        {isAdmin && (
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setEditValues({ ...editValues, isPrivate: !editValues.isPrivate })}
+                                                    className={cn(
+                                                        "flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors border",
+                                                        editValues.isPrivate
+                                                            ? "bg-red-500/10 text-red-600 border-red-200"
+                                                            : "bg-green-500/10 text-green-600 border-green-200"
+                                                    )}
+                                                >
+                                                    {editValues.isPrivate ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                                                    {editValues.isPrivate ? t('calculator.private') : t('calculator.public')}
+                                                </button>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {editValues.isPrivate ? t('calculator.onlyAdmins') : t('calculator.visibleToEveryone')}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
-                                    <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded flex gap-2 items-start">
-                                        <StickyNote className="h-3 w-3 mt-0.5 shrink-0 opacity-50" />
-                                        <p>{transaction.notes}</p>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded flex gap-2 items-start">
+                                            <StickyNote className="h-3 w-3 mt-0.5 shrink-0 opacity-50" />
+                                            <p>{transaction.notes}</p>
+                                        </div>
+                                        {transaction.isPrivate && isAdmin && (
+                                            <div className="flex items-center gap-1 text-[10px] text-red-500 font-medium">
+                                                <Lock className="h-3 w-3" /> {t('calculator.private')}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

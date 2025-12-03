@@ -39,7 +39,8 @@ export default function TransactionListPage() {
                 // Map steps
                 stepFiatAcquired: txn.step_fiat_acquired || false,
                 stepUsdtSold: txn.step_usdt_sold || false,
-                stepFiatPaid: txn.step_fiat_paid || false
+                stepFiatPaid: txn.step_fiat_paid || false,
+                isPrivate: txn.is_private ?? true // Default to true if undefined for safety
             }))
 
             setTransactions(formattedTransactions)

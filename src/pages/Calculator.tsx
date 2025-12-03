@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../co
 import { Input } from "../components/ui/input"
 import { Button } from "../components/ui/button"
 import { toast } from "sonner"
-import { ArrowRightLeft, TrendingUp, RefreshCw, Banknote, Building2 } from "lucide-react"
-import { formatCurrency } from "../lib/utils"
+import { ArrowRightLeft, TrendingUp, RefreshCw, Banknote, Building2, Lock, Unlock } from "lucide-react"
+import { formatCurrency, cn } from "../lib/utils"
 import { supabase } from "../lib/supabase"
 import { useTranslation } from "react-i18next"
+import { useUserRole } from "../hooks/useUserRole"
 
 export default function CalculatorPage() {
     const { t } = useTranslation()
+    const { isAdmin } = useUserRole()
     const [currency, setCurrency] = useState<"GBP" | "EUR">("GBP")
     const [targetMode, setTargetMode] = useState<"USDT" | "FIAT">("FIAT") // Default to FIAT input (I have X GBP)
 
@@ -29,6 +31,7 @@ export default function CalculatorPage() {
     // New Fields
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "bank">("cash")
     const [notes, setNotes] = useState<string>("")
+    const [isPrivate, setIsPrivate] = useState<boolean>(true)
 
     const [loadingRates, setLoadingRates] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -189,7 +192,8 @@ export default function CalculatorPage() {
                 kraken_fee: parseFloat(krakenFee) || 0,
 
                 payment_method: paymentMethod,
-                notes: notes || `Profit: ${results.profit.toFixed(2)} LYD`
+                notes: notes || `Profit: ${results.profit.toFixed(2)} LYD`,
+                is_private: isPrivate
             })
 
             if (error) throw error
@@ -419,6 +423,28 @@ export default function CalculatorPage() {
                             </div>
                         </div>
                     </div>
+
+                    {isAdmin && (
+                        <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setIsPrivate(!isPrivate)}
+                                    className={cn(
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                                        isPrivate
+                                            ? "bg-red-500/10 text-red-600 border-red-200"
+                                            : "bg-green-500/10 text-green-600 border-green-200"
+                                    )}
+                                >
+                                    {isPrivate ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                                    {isPrivate ? t('calculator.private') : t('calculator.public')}
+                                </button>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                                {isPrivate ? t('calculator.onlyAdmins') : t('calculator.visibleToEveryone')}
+                            </span>
+                        </div>
+                    )}
 
                     <Button
                         className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20"
