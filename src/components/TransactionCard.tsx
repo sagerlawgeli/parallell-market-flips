@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "./ui/card"
 import { formatCurrency, cn } from "../lib/utils"
-import { ArrowRight, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote } from "lucide-react"
+import { ArrowRight, ArrowLeft, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -44,7 +44,8 @@ interface TransactionCardProps {
 }
 
 export function TransactionCard({ transaction, onStatusChange }: TransactionCardProps) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
+    const arabic = i18n.language === 'ar'
 
     const statusConfig = {
         planned: { label: t('transaction.planned'), icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -400,7 +401,11 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 )}
                             </div>
 
-                            <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
+                            {!arabic ? (
+                                <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
+                            ) : (
+                                <ArrowLeft className="h-4 w-4 text-muted-foreground/50" />
+                            )}
 
                             <div className="flex-1 text-right">
                                 <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.sell')}</div>
