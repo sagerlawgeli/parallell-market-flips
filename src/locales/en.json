@@ -14,6 +14,12 @@
         "loading": "Loading...",
         "noData": "No data found"
     },
+    "filter": {
+        "visibility": "Visibility",
+        "all": "All Transactions",
+        "private": "Private Only",
+        "public": "Public Only"
+    },
     "ledger": {
         "title": "Ledger",
         "subtitle": "History of all your arbitrage transactions.",

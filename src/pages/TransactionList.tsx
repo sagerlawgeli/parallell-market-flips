@@ -4,22 +4,33 @@ import { supabase } from "../lib/supabase"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
+import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
 
 export default function TransactionListPage() {
     const { t } = useTranslation()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
+    const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
 
     useEffect(() => {
         fetchTransactions()
-    }, [])
+    }, [visibilityFilter])
 
     const fetchTransactions = async () => {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('transactions')
                 .select('*')
                 .order('created_at', { ascending: false })
+
+            // Apply visibility filter
+            if (visibilityFilter === 'private') {
+                query = query.eq('is_private', true)
+            } else if (visibilityFilter === 'public') {
+                query = query.eq('is_private', false)
+            }
+
+            const { data, error } = await query
 
             if (error) throw error
 
@@ -60,6 +71,8 @@ export default function TransactionListPage() {
                     {t('ledger.subtitle')}
                 </p>
             </div>
+
+            <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
 
             <div className="grid gap-4">
                 {loading ? (

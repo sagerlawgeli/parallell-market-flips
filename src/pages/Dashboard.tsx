@@ -6,10 +6,12 @@ import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { useTranslation } from "react-i18next"
+import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
 
 export default function DashboardPage() {
     const { t } = useTranslation()
     const [loading, setLoading] = useState(true)
+    const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
     const [metrics, setMetrics] = useState({
         totalProfit: 0,
         cashProfit: 0,
@@ -30,15 +32,24 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchData()
-    }, [])
+    }, [visibilityFilter])
 
     const fetchData = async () => {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('transactions')
                 .select('*')
                 .eq('status', 'complete') // Only count completed transactions
                 .order('created_at', { ascending: true }) // Oldest first for charts
+
+            // Apply visibility filter
+            if (visibilityFilter === 'private') {
+                query = query.eq('is_private', true)
+            } else if (visibilityFilter === 'public') {
+                query = query.eq('is_private', false)
+            }
+
+            const { data, error } = await query
 
             if (error) throw error
 
@@ -143,6 +154,8 @@ export default function DashboardPage() {
                     {t('analytics.subtitle')}
                 </p>
             </div>
+
+            <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
 
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
