@@ -22,7 +22,13 @@ export default function TransactionListPage() {
         try {
             let query = supabase
                 .from('transactions')
-                .select('*')
+                .select(`
+                    *,
+                    holders (
+                        id,
+                        name
+                    )
+                `)
                 .order('created_at', { ascending: false })
 
             // Apply visibility filter
@@ -60,7 +66,11 @@ export default function TransactionListPage() {
                 stepFiatAcquired: txn.step_fiat_acquired || false,
                 stepUsdtSold: txn.step_usdt_sold || false,
                 stepFiatPaid: txn.step_fiat_paid || false,
-                isPrivate: txn.is_private ?? true // Default to true if undefined for safety
+                isPrivate: txn.is_private ?? true, // Default to true if undefined for safety
+
+                // Map holder
+                holderId: txn.holder_id,
+                holderName: txn.holders?.name
             }))
 
             setTransactions(formattedTransactions)

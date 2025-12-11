@@ -2,7 +2,9 @@
     "nav": {
         "ledger": "السجل",
         "calculator": "الحاسبة",
-        "analytics": "التحليلات"
+        "analytics": "التحليلات",
+        "holders": "الأمناء",
+        "holdersSummary": "ملخص النقد"
     },
     "common": {
         "logout": "خروج",
@@ -102,6 +104,40 @@
         "cost": "التكلفة",
         "return": "العائد",
         "viewHistory": "عرض السجل",
-        "confirmDelete": "هل أنت متأكد من حذف هذه المعاملة؟"
+        "confirmDelete": "هل أنت متأكد من حذف هذه المعاملة؟",
+        "holder": "أمين النقد",
+        "selectHolder": "اختر أمين...",
+        "noHolder": "لم يتم تعيين أمين",
+        "holderRequired": "يرجى تعيين أمين قبل وضع علامة كمدفوع",
+        "holderRequiredNote": "الأمين مطلوب عند تحديد 'تم الدفع'"
+    },
+    "holders": {
+        "title": "إدارة الأمناء",
+        "subtitle": "إضافة وإدارة الأشخاص الذين يحملون الأرباح النقدية.",
+        "listTitle": "أمناء النقد",
+        "addNew": "إضافة أمين",
+        "namePlaceholder": "أدخل اسم الأمين...",
+        "nameRequired": "اسم الأمين مطلوب",
+        "noHolders": "لا يوجد أمناء. أضف أول أمين.",
+        "addSuccess": "تمت إضافة الأمين بنجاح",
+        "addError": "فشل في إضافة الأمين",
+        "updateSuccess": "تم تحديث الأمين بنجاح",
+        "updateError": "فشل في تحديث الأمين",
+        "deleteSuccess": "تم حذف الأمين بنجاح",
+        "deleteError": "فشل في حذف الأمين",
+        "confirmDelete": "هل أنت متأكد من حذف '{{name}}'؟ لن يتم حذف المعاملات.",
+        "duplicateName": "يوجد أمين بهذا الاسم بالفعل",
+        "fetchError": "فشل في تحميل الأمناء"
+    },
+    "holdersSummary": {
+        "title": "ملخص النقد",
+        "subtitle": "عرض إجمالي النقد الذي يحمله كل شخص.",
+        "totalCash": "إجمالي النقد المحتفظ به",
+        "totalHolders": "إجمالي الأمناء",
+        "holding": "يحمل",
+        "transactions": "المعاملات",
+        "transactionCount": "{{count}} معاملة",
+        "noData": "لا توجد بيانات أمناء",
+        "fetchError": "فشل في تحميل ملخص الأمناء"
     }
 }

@@ -1,5 +1,5 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom"
-import { Calculator, List, LayoutDashboard, LogOut, Languages } from "lucide-react"
+import { Calculator, List, LayoutDashboard, LogOut, Languages, Users, Wallet } from "lucide-react"
 import { cn } from "../lib/utils"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
@@ -14,6 +14,8 @@ export default function Layout() {
         { icon: List, label: t('nav.ledger'), path: "/" },
         { icon: Calculator, label: t('nav.calculator'), path: "/calculator" },
         { icon: LayoutDashboard, label: t('nav.analytics'), path: "/analytics" },
+        { icon: Users, label: t('nav.holders'), path: "/holders" },
+        { icon: Wallet, label: t('nav.holdersSummary'), path: "/holders-summary" },
     ]
 
     const handleLogout = async () => {

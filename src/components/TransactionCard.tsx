@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "./ui/card"
 import { formatCurrency, cn } from "../lib/utils"
-import { ArrowRight, ArrowLeft, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote, Lock, Unlock } from "lucide-react"
+import { ArrowRight, ArrowLeft, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote, Lock, Unlock, User } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -38,6 +38,10 @@ export interface Transaction {
     stepFiatAcquired: boolean
     stepUsdtSold: boolean
     stepFiatPaid: boolean
+
+    // Holder tracking
+    holderId?: string
+    holderName?: string
 }
 
 interface TransactionCardProps {
@@ -70,8 +74,27 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         paymentMethod: transaction.paymentMethod,
         createdAt: transaction.createdAt,
         notes: transaction.notes || "",
-        isPrivate: transaction.isPrivate
+        isPrivate: transaction.isPrivate,
+        holderId: transaction.holderId || ""
     })
+
+    // Holders state
+    const [holders, setHolders] = useState<Array<{ id: string; name: string }>>([])
+
+    // Fetch holders
+    useEffect(() => {
+        const fetchHolders = async () => {
+            const { data, error } = await supabase
+                .from('holders')
+                .select('id, name')
+                .order('name', { ascending: true })
+
+            if (!error && data) {
+                setHolders(data)
+            }
+        }
+        fetchHolders()
+    }, [])
 
     // Reset edit values when transaction changes
     useEffect(() => {
@@ -83,7 +106,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             paymentMethod: transaction.paymentMethod,
             createdAt: transaction.createdAt,
             notes: transaction.notes || "",
-            isPrivate: transaction.isPrivate
+            isPrivate: transaction.isPrivate,
+            holderId: transaction.holderId || ""
         })
         setIsEditing(false)
     }, [transaction])
@@ -97,7 +121,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             editValues.paymentMethod !== transaction.paymentMethod ||
             editValues.createdAt !== transaction.createdAt ||
             editValues.notes !== (transaction.notes || "") ||
-            editValues.isPrivate !== transaction.isPrivate
+            editValues.isPrivate !== transaction.isPrivate ||
+            editValues.holderId !== (transaction.holderId || "")
         )
     }
 
@@ -127,6 +152,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                 created_at: editValues.createdAt,
                 notes: editValues.notes,
                 is_private: editValues.isPrivate,
+                holder_id: editValues.holderId || null,
                 updated_at: new Date().toISOString()
             }
 
@@ -191,6 +217,12 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             const newValue = !transaction[step]
             const dbColumn = step === 'stepFiatAcquired' ? 'step_fiat_acquired' :
                 step === 'stepUsdtSold' ? 'step_usdt_sold' : 'step_fiat_paid'
+
+            // Validate: if checking stepFiatPaid, holder must be assigned
+            if (step === 'stepFiatPaid' && newValue && !transaction.holderId) {
+                toast.error(t('transaction.holderRequired'))
+                return
+            }
 
             // Determine new status
             let newStatus = transaction.status
@@ -478,6 +510,46 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 />
                                 <span className={transaction.stepFiatPaid ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatPaid')}</span>
                             </label>
+                        </div>
+
+                        {/* Holder Selection */}
+                        <div className="pt-2 border-t border-border/50">
+                            <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                    {t('transaction.holder')}
+                                </span>
+                            </div>
+                            {isEditing ? (
+                                <div className="mt-2">
+                                    <select
+                                        value={editValues.holderId}
+                                        onChange={(e) => setEditValues({ ...editValues, holderId: e.target.value })}
+                                        className="w-full h-8 px-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                    >
+                                        <option value="">{t('transaction.selectHolder')}</option>
+                                        {holders.map((holder) => (
+                                            <option key={holder.id} value={holder.id}>
+                                                {holder.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {transaction.stepFiatPaid && !editValues.holderId && (
+                                        <p className="text-xs text-red-500 mt-1">{t('transaction.holderRequiredNote')}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="mt-2">
+                                    {transaction.holderName ? (
+                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-primary/10 text-primary text-sm font-medium">
+                                            <User className="h-3 w-3" />
+                                            {transaction.holderName}
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground italic">{t('transaction.noHolder')}</span>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Notes Section */}

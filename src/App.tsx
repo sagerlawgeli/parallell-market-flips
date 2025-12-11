@@ -7,6 +7,8 @@ import CalculatorPage from "./pages/Calculator"
 import TransactionListPage from "./pages/TransactionList"
 import DashboardPage from "./pages/Dashboard"
 import AuthPage from "./pages/Auth"
+import HoldersPage from "./pages/Holders"
+import HoldersSummaryPage from "./pages/HoldersSummary"
 import "./i18n"
 import { useTranslation } from "react-i18next"
 
@@ -50,6 +52,8 @@ function App() {
           <Route index element={<TransactionListPage />} />
           <Route path="calculator" element={<CalculatorPage />} />
           <Route path="analytics" element={<DashboardPage />} />
+          <Route path="holders" element={<HoldersPage />} />
+          <Route path="holders-summary" element={<HoldersSummaryPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

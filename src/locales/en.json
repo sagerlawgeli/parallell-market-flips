@@ -2,7 +2,9 @@
     "nav": {
         "ledger": "Ledger",
         "calculator": "Calculator",
-        "analytics": "Analytics"
+        "analytics": "Analytics",
+        "holders": "Holders",
+        "holdersSummary": "Cash Summary"
     },
     "common": {
         "logout": "Logout",
@@ -102,6 +104,40 @@
         "cost": "Cost",
         "return": "Return",
         "viewHistory": "View History",
-        "confirmDelete": "Are you sure you want to delete this transaction?"
+        "confirmDelete": "Are you sure you want to delete this transaction?",
+        "holder": "Cash Holder",
+        "selectHolder": "Select holder...",
+        "noHolder": "No holder assigned",
+        "holderRequired": "Please assign a holder before marking as paid",
+        "holderRequiredNote": "Holder is required when 'Fiat Paid' is checked"
+    },
+    "holders": {
+        "title": "Manage Holders",
+        "subtitle": "Add and manage people who hold cash profits.",
+        "listTitle": "Cash Holders",
+        "addNew": "Add Holder",
+        "namePlaceholder": "Enter holder name...",
+        "nameRequired": "Holder name is required",
+        "noHolders": "No holders found. Add your first holder.",
+        "addSuccess": "Holder added successfully",
+        "addError": "Failed to add holder",
+        "updateSuccess": "Holder updated successfully",
+        "updateError": "Failed to update holder",
+        "deleteSuccess": "Holder deleted successfully",
+        "deleteError": "Failed to delete holder",
+        "confirmDelete": "Are you sure you want to delete '{{name}}'? Transactions will not be deleted.",
+        "duplicateName": "A holder with this name already exists",
+        "fetchError": "Failed to load holders"
+    },
+    "holdersSummary": {
+        "title": "Cash Summary",
+        "subtitle": "View total cash held by each person.",
+        "totalCash": "Total Cash Held",
+        "totalHolders": "Total Holders",
+        "holding": "Holding",
+        "transactions": "Transactions",
+        "transactionCount": "{{count}} transactions",
+        "noData": "No holder data available",
+        "fetchError": "Failed to load holders summary"
     }
 }
