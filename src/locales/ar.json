@@ -18,7 +18,9 @@
         "visibility": "الرؤية",
         "all": "جميع المعاملات",
         "private": "خاص فقط",
-        "public": "عام فقط"
+        "public": "عام فقط",
+        "paymentMethod": "طريقة الدفع",
+        "allPayments": "جميع المدفوعات"
     },
     "ledger": {
         "title": "السجل",

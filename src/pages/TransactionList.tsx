@@ -5,16 +5,18 @@ import { format } from "date-fns"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
+import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
 
 export default function TransactionListPage() {
     const { t } = useTranslation()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
 
     useEffect(() => {
         fetchTransactions()
-    }, [visibilityFilter])
+    }, [visibilityFilter, paymentMethodFilter])
 
     const fetchTransactions = async () => {
         try {
@@ -28,6 +30,13 @@ export default function TransactionListPage() {
                 query = query.eq('is_private', true)
             } else if (visibilityFilter === 'public') {
                 query = query.eq('is_private', false)
+            }
+
+            // Apply payment method filter
+            if (paymentMethodFilter === 'cash') {
+                query = query.eq('payment_method', 'cash')
+            } else if (paymentMethodFilter === 'bank') {
+                query = query.eq('payment_method', 'bank')
             }
 
             const { data, error } = await query
@@ -72,7 +81,10 @@ export default function TransactionListPage() {
                 </p>
             </div>
 
-            <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+            <div className="flex flex-wrap gap-4">
+                <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
+            </div>
 
             <div className="grid gap-4">
                 {loading ? (

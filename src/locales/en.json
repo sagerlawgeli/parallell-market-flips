@@ -18,7 +18,9 @@
         "visibility": "Visibility",
         "all": "All Transactions",
         "private": "Private Only",
-        "public": "Public Only"
+        "public": "Public Only",
+        "paymentMethod": "Payment Method",
+        "allPayments": "All Payments"
     },
     "ledger": {
         "title": "Ledger",
