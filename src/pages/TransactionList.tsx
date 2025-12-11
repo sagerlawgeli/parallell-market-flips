@@ -86,6 +86,12 @@ export default function TransactionListPage() {
                 <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
             </div>
 
+            {!loading && (
+                <div className="text-sm text-muted-foreground">
+                    {t(transactions.length === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: transactions.length })}
+                </div>
+            )}
+
             <div className="grid gap-4">
                 {loading ? (
                     <div className="text-center py-10 text-muted-foreground">{t('common.loading')}</div>

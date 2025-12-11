@@ -25,7 +25,9 @@
     "ledger": {
         "title": "Ledger",
         "subtitle": "History of all your arbitrage transactions.",
-        "noTransactions": "No transactions found."
+        "noTransactions": "No transactions found.",
+        "transactionCount": "{{count}} transactions",
+        "transactionCountSingular": "{{count}} transaction"
     },
     "calculator": {
         "title": "Calculator",

@@ -157,6 +157,10 @@ export default function DashboardPage() {
 
             <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
 
+            <div className="text-sm text-muted-foreground">
+                {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
+            </div>
+
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card className="border-t-primary">
