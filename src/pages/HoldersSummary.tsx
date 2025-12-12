@@ -122,12 +122,12 @@ export default function HoldersSummaryPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground mb-1">{t('holdersSummary.totalCash')}</p>
-                                    <p className="text-4xl font-bold">{formatCurrency(totalAllHolders, 'LYD')}</p>
+                                    <p className="text-2xl font-bold">{formatCurrency(totalAllHolders, 'LYD')}</p>
                                 </div>
                             </div>
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground mb-1">{t('holdersSummary.totalHolders')}</p>
-                                <p className="text-3xl font-semibold">{holdersSummary.length}</p>
+                                <p className="text-2xl font-semibold">{holdersSummary.length}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -174,7 +174,7 @@ export default function HoldersSummaryPage() {
                                                     <User className="h-6 w-6 text-primary" />
                                                 </div>
                                                 <div>
-                                                    <CardTitle className="text-xl">{holder.name}</CardTitle>
+                                                    <CardTitle className="text-lg">{holder.name}</CardTitle>
                                                     <p className="text-sm text-muted-foreground mt-0.5">
                                                         {t('holdersSummary.transactionCount', { count: holder.transactionCount })}
                                                     </p>
@@ -184,7 +184,7 @@ export default function HoldersSummaryPage() {
                                                 <div className="text-right">
                                                     <p className="text-xs text-muted-foreground mb-1">{t('holdersSummary.holding')}</p>
                                                     <p className={cn(
-                                                        "text-2xl font-bold flex items-center gap-1",
+                                                        "text-lg font-bold flex items-center gap-1",
                                                         holder.totalProfit >= 0 ? 'text-green-500' : 'text-red-500'
                                                     )}>
                                                         {holder.totalProfit > 0 && <TrendingUp className="h-5 w-5" />}
