@@ -1,7 +1,21 @@
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent } from "./ui/card"
 import { formatCurrency, cn } from "../lib/utils"
-import { ArrowRight, ArrowLeft, CheckCircle2, Clock, XCircle, MoreVertical, Save, X, Trash2, History, Banknote, Building2, StickyNote, Lock, Unlock, User } from "lucide-react"
+import {
+    ArrowRight,
+    CheckCircle2,
+    Clock,
+    XCircle,
+    MoreVertical,
+    Trash2,
+    History,
+    Banknote,
+    Building2,
+    Lock,
+    User,
+    Edit3
+} from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,6 +27,7 @@ import {
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { BottomSheet } from "./ui/bottom-sheet"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
@@ -50,22 +65,49 @@ interface TransactionCardProps {
 }
 
 export function TransactionCard({ transaction, onStatusChange }: TransactionCardProps) {
-    const { t, i18n } = useTranslation()
-    const arabic = i18n.language === 'ar'
+    const { t } = useTranslation()
     const { isAdmin } = useUserRole()
 
     const statusConfig = {
-        planned: { label: t('transaction.planned'), icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10", stripColor: "bg-blue-500" },
-        in_progress: { label: t('transaction.inProgress'), icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10", stripColor: "bg-orange-500" },
-        complete: { label: t('transaction.complete'), icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10", stripColor: "bg-green-500" },
-        cancelled: { label: t('transaction.cancelled'), icon: XCircle, color: "text-red-500", bg: "bg-red-500/10", stripColor: "bg-red-500" },
+        planned: {
+            label: t('transaction.planned'),
+            icon: Clock,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+            stripColor: "bg-blue-500",
+            dotColor: "bg-blue-500"
+        },
+        in_progress: {
+            label: t('transaction.inProgress'),
+            icon: Clock,
+            color: "text-orange-500",
+            bg: "bg-orange-500/10",
+            stripColor: "bg-orange-500",
+            dotColor: "bg-orange-500"
+        },
+        complete: {
+            label: t('transaction.complete'),
+            icon: CheckCircle2,
+            color: "text-green-500",
+            bg: "bg-green-500/10",
+            stripColor: "bg-green-500",
+            dotColor: "bg-green-500"
+        },
+        cancelled: {
+            label: t('transaction.cancelled'),
+            icon: XCircle,
+            color: "text-red-500",
+            bg: "bg-red-500/10",
+            stripColor: "bg-red-500",
+            dotColor: "bg-red-500"
+        },
     }
 
     const config = statusConfig[transaction.status] || statusConfig['planned']
     const StatusIcon = config.icon
 
     // Edit State
-    const [isEditing, setIsEditing] = useState(false)
+    const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
     const [editValues, setEditValues] = useState({
         fiatAmount: transaction.fiatAmount.toString(),
         fiatRate: transaction.fiatRate.toString(),
@@ -109,7 +151,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             isPrivate: transaction.isPrivate,
             holderId: transaction.holderId || ""
         })
-        setIsEditing(false)
     }, [transaction])
 
     const hasChanges = () => {
@@ -135,7 +176,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
 
     const handleSave = async () => {
         if (!hasChanges()) {
-            setIsEditing(false)
+            setIsEditSheetOpen(false)
             return
         }
 
@@ -156,7 +197,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                 updated_at: new Date().toISOString()
             }
 
-            // 1. Update Transaction
             const { error: updateError } = await supabase
                 .from('transactions')
                 .update(updates)
@@ -164,7 +204,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
 
             if (updateError) throw updateError
 
-            // 2. Create Audit Log
             const changes = {
                 old: {
                     fiatAmount: transaction.fiatAmount,
@@ -200,7 +239,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             if (logError) console.error("Failed to create audit log:", logError)
 
             toast.success("Transaction updated")
-            setIsEditing(false)
+            setIsEditSheetOpen(false)
             if (onStatusChange) onStatusChange()
 
         } catch (error) {
@@ -218,19 +257,16 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             const dbColumn = step === 'stepFiatAcquired' ? 'step_fiat_acquired' :
                 step === 'stepUsdtSold' ? 'step_usdt_sold' : 'step_fiat_paid'
 
-            // Validate: if checking stepFiatPaid, holder must be assigned
             if (step === 'stepFiatPaid' && newValue && !transaction.holderId) {
                 toast.error(t('transaction.holderRequired'))
                 return
             }
 
-            // Determine new status
             let newStatus = transaction.status
             if (newValue && transaction.status === 'planned') {
                 newStatus = 'in_progress'
             }
 
-            // Check if all steps will be complete
             const isFiatAcquired = step === 'stepFiatAcquired' ? newValue : transaction.stepFiatAcquired
             const isUsdtSold = step === 'stepUsdtSold' ? newValue : transaction.stepUsdtSold
             const isFiatPaid = step === 'stepFiatPaid' ? newValue : transaction.stepFiatPaid
@@ -265,7 +301,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         try {
             const { data: { user } } = await supabase.auth.getUser()
 
-            // 1. Update Status
             const { error } = await supabase
                 .from('transactions')
                 .update({ status: newStatus })
@@ -273,7 +308,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
 
             if (error) throw error
 
-            // 2. Log Status Change
             if (user) {
                 await supabase.from('transaction_logs').insert({
                     transaction_id: transaction.id,
@@ -310,355 +344,376 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         }
     }
 
+    const progressPercentage = [
+        transaction.stepFiatAcquired,
+        transaction.stepUsdtSold,
+        transaction.stepFiatPaid
+    ].filter(Boolean).length / 3 * 100
+
     return (
-        <Card className={cn("overflow-hidden transition-all hover:shadow-md border-t-primary", isEditing && "ring-2 ring-primary")}>
-            <CardContent className="p-0">
-                <div className="flex items-stretch">
-                    {/* Status Strip */}
-                    <div className={cn("w-1.5", config.stripColor)} />
+        <>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+            >
+                <Card className="overflow-hidden transition-all hover:shadow-lg active:scale-[0.98] border-0 shadow-sm">
+                    <CardContent className="p-0">
+                        <div className="flex items-stretch">
+                            {/* Status Strip */}
+                            <div className={cn("w-1", config.stripColor)} />
 
-                    <div className="flex-1 p-4 space-y-3">
-                        {/* Header */}
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg">{transaction.type}</span>
-                                <span className="text-muted-foreground text-xs">•</span>
-                                {isEditing ? (
-                                    <Input
-                                        type="date"
-                                        value={editValues.createdAt}
-                                        onChange={e => setEditValues({ ...editValues, createdAt: e.target.value })}
-                                        className="h-6 text-xs w-32"
-                                    />
-                                ) : (
-                                    <span className="text-sm text-muted-foreground">{transaction.createdAt}</span>
-                                )}
-                                {isEditing ? (
-                                    <div className="flex gap-1">
-                                        <Button
-                                            size="sm"
-                                            variant={editValues.paymentMethod === "bank" ? "default" : "outline"}
-                                            onClick={() => setEditValues({ ...editValues, paymentMethod: "bank" })}
-                                            className="h-5 text-[10px] px-2"
-                                        >
-                                            {t('calculator.bank')}
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant={editValues.paymentMethod === "cash" ? "default" : "outline"}
-                                            onClick={() => setEditValues({ ...editValues, paymentMethod: "cash" })}
-                                            className="h-5 text-[10px] px-2"
-                                        >
-                                            {t('calculator.cash')}
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
-                                        {transaction.paymentMethod === 'cash' ? <Banknote className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
-                                        {transaction.paymentMethod === 'cash' ? t('calculator.cash') : t('calculator.bank')}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {/* Status Dropdown (Direct Edit) */}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button className={cn("px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:opacity-80 transition-opacity", statusConfig[transaction.status].bg, statusConfig[transaction.status].color)}>
-                                            <StatusIcon className="h-3 w-3" />
-                                            <span className="capitalize">{statusConfig[transaction.status].label}</span>
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>{t('common.update')}</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => handleStatusUpdate('planned')}>
-                                            <Clock className="mr-2 h-4 w-4 text-blue-500" /> {t('transaction.planned')}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
-                                            <Clock className="mr-2 h-4 w-4 text-orange-500" /> {t('transaction.inProgress')}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleStatusUpdate('complete')}>
-                                            <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> {t('transaction.complete')}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleStatusUpdate('cancelled')}>
-                                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> {t('transaction.cancelled')}
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                {/* Actions Menu */}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                                            <MoreVertical className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem disabled>
-                                            <History className="mr-2 h-4 w-4" /> View History
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
-                                            <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-
-                        {/* Amounts (Editable) */}
-                        <div className={cn(
-                            "flex items-center justify-between text-sm",
-                            isEditing ? "flex-col sm:flex-row gap-3 sm:gap-4" : "gap-4"
-                        )}>
-                            <div className={cn("flex-1", isEditing && "w-full")}>
-                                <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.buy')}</div>
-                                {isEditing ? (
-                                    <div className="space-y-2">
-                                        <Input
-                                            type="number"
-                                            value={editValues.fiatAmount}
-                                            onChange={e => setEditValues({ ...editValues, fiatAmount: e.target.value })}
-                                            className="h-9 sm:h-7 text-sm"
-                                        />
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-xs text-muted-foreground">@</span>
-                                            <Input
-                                                type="number"
-                                                value={editValues.fiatRate}
-                                                onChange={e => setEditValues({ ...editValues, fiatRate: e.target.value })}
-                                                className="h-8 sm:h-6 text-xs flex-1 sm:w-20"
-                                            />
+                            <div className="flex-1 p-4 md:p-5">
+                                {/* Header */}
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-bold text-xl">{transaction.type}</span>
+                                            <div className={cn("w-2 h-2 rounded-full", config.dotColor)} />
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <span>{transaction.createdAt}</span>
+                                            <span>•</span>
+                                            <div className="flex items-center gap-1">
+                                                {transaction.paymentMethod === 'cash' ?
+                                                    <Banknote className="h-3 w-3" /> :
+                                                    <Building2 className="h-3 w-3" />
+                                                }
+                                                {transaction.paymentMethod === 'cash' ? t('calculator.cash') : t('calculator.bank')}
+                                            </div>
                                         </div>
                                     </div>
-                                ) : (
-                                    <div
-                                        className="cursor-pointer hover:bg-muted/50 p-1 rounded -ml-1 transition-colors"
-                                        onClick={() => setIsEditing(true)}
-                                        title="Click to edit"
-                                    >
-                                        <div className="font-medium">{formatCurrency(transaction.fiatAmount, transaction.type)}</div>
+
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setIsEditSheetOpen(true)}
+                                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                                        >
+                                            <Edit3 className="h-4 w-4" />
+                                        </Button>
+
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
+                                                    <Edit3 className="mr-2 h-4 w-4" /> Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem disabled>
+                                                    <History className="mr-2 h-4 w-4" /> View History
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
+                                                    <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+
+                                {/* Amounts */}
+                                <div className="flex items-center justify-between mb-4 bg-muted/30 rounded-2xl p-4">
+                                    <div className="flex-1">
+                                        <div className="text-xs text-muted-foreground mb-1">{t('calculator.buy')}</div>
+                                        <div className="font-semibold text-lg">{formatCurrency(transaction.fiatAmount, transaction.type)}</div>
                                         <div className="text-xs text-muted-foreground">@ {transaction.fiatRate} LYD</div>
                                     </div>
-                                )}
-                            </div>
 
-                            {!isEditing && (
-                                !arabic ? (
-                                    <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
-                                ) : (
-                                    <ArrowLeft className="h-4 w-4 text-muted-foreground/50" />
-                                )
-                            )}
+                                    <ArrowRight className="h-5 w-5 text-muted-foreground/30 mx-2" />
 
-                            <div className={cn("flex-1 text-right", isEditing && "w-full text-left")}>
-                                <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.sell')}</div>
-                                {isEditing ? (
-                                    <div className="space-y-2 flex flex-col items-stretch">
-                                        <Input
-                                            type="number"
-                                            value={editValues.usdtAmount}
-                                            onChange={e => setEditValues({ ...editValues, usdtAmount: e.target.value })}
-                                            className="h-9 sm:h-7 text-sm"
-                                        />
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-xs text-muted-foreground">@</span>
-                                            <Input
-                                                type="number"
-                                                value={editValues.usdtRate}
-                                                onChange={e => setEditValues({ ...editValues, usdtRate: e.target.value })}
-                                                className="h-8 sm:h-6 text-xs flex-1 sm:w-20"
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="cursor-pointer hover:bg-muted/50 p-1 rounded -mr-1 transition-colors"
-                                        onClick={() => setIsEditing(true)}
-                                        title="Click to edit"
-                                    >
-                                        <div className="font-medium">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
+                                    <div className="flex-1 text-right">
+                                        <div className="text-xs text-muted-foreground mb-1">{t('calculator.sell')}</div>
+                                        <div className="font-semibold text-lg">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
                                         <div className="text-xs text-muted-foreground">@ {transaction.usdtRate} LYD</div>
                                     </div>
-                                )}
-                            </div>
-                        </div>
+                                </div>
 
-                        {/* Progress Steps */}
-                        <div className={cn(
-                            "flex items-center py-2",
-                            isEditing ? "flex-col sm:flex-row gap-3 sm:gap-4 items-start" : "gap-4"
-                        )}>
-                            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={transaction.stepFiatAcquired}
-                                    onChange={() => handleStepToggle('stepFiatAcquired')}
-                                    className={cn(
-                                        "rounded border-gray-300 text-primary focus:ring-primary",
-                                        isEditing ? "h-4 w-4" : "h-3 w-3"
-                                    )}
-                                />
-                                <span className={transaction.stepFiatAcquired ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatAcquired')}</span>
-                            </label>
-                            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={transaction.stepUsdtSold}
-                                    onChange={() => handleStepToggle('stepUsdtSold')}
-                                    className={cn(
-                                        "rounded border-gray-300 text-primary focus:ring-primary",
-                                        isEditing ? "h-4 w-4" : "h-3 w-3"
-                                    )}
-                                />
-                                <span className={transaction.stepUsdtSold ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.usdtSold')}</span>
-                            </label>
-                            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={transaction.stepFiatPaid}
-                                    onChange={() => handleStepToggle('stepFiatPaid')}
-                                    className={cn(
-                                        "rounded border-gray-300 text-primary focus:ring-primary",
-                                        isEditing ? "h-4 w-4" : "h-3 w-3"
-                                    )}
-                                />
-                                <span className={transaction.stepFiatPaid ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatPaid')}</span>
-                            </label>
-                        </div>
-
-                        {/* Holder Selection */}
-                        <div className="pt-2 border-t border-border/50">
-                            <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                    {t('transaction.holder')}
-                                </span>
-                            </div>
-                            {isEditing ? (
-                                <div className="mt-2">
-                                    <select
-                                        value={editValues.holderId}
-                                        onChange={(e) => setEditValues({ ...editValues, holderId: e.target.value })}
-                                        className="w-full h-10 sm:h-8 px-3 sm:px-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                                    >
-                                        <option value="">{t('transaction.selectHolder')}</option>
-                                        {holders.map((holder) => (
-                                            <option key={holder.id} value={holder.id}>
-                                                {holder.name}
-                                            </option>
+                                {/* Progress */}
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-medium text-muted-foreground">Progress</span>
+                                        <span className="text-xs font-semibold">{Math.round(progressPercentage)}%</span>
+                                    </div>
+                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${progressPercentage}%` }}
+                                            transition={{ duration: 0.5, ease: "easeOut" }}
+                                            className={cn("h-full", config.stripColor)}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 mt-3">
+                                        {[
+                                            { key: 'stepFiatAcquired', label: t('transaction.fiatAcquired'), checked: transaction.stepFiatAcquired },
+                                            { key: 'stepUsdtSold', label: t('transaction.usdtSold'), checked: transaction.stepUsdtSold },
+                                            { key: 'stepFiatPaid', label: t('transaction.fiatPaid'), checked: transaction.stepFiatPaid }
+                                        ].map(({ key, label, checked }) => (
+                                            <button
+                                                key={key}
+                                                onClick={() => handleStepToggle(key as any)}
+                                                className={cn(
+                                                    "flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all",
+                                                    checked
+                                                        ? cn(config.bg, config.color)
+                                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                )}
+                                            >
+                                                {label}
+                                            </button>
                                         ))}
-                                    </select>
-                                    {transaction.stepFiatPaid && !editValues.holderId && (
-                                        <p className="text-xs text-red-500 mt-2">{t('transaction.holderRequiredNote')}</p>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="mt-2">
-                                    {transaction.holderName ? (
-                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-primary/10 text-primary text-sm font-medium">
-                                            <User className="h-3 w-3" />
-                                            {transaction.holderName}
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground italic">{t('transaction.noHolder')}</span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Notes Section */}
-                        {(transaction.notes || isEditing) && (
-                            <div className="pt-2 border-t border-border/50">
-                                {isEditing ? (
-                                    <div className="space-y-2">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('calculator.notes')}</label>
-                                            <Textarea
-                                                value={editValues.notes}
-                                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditValues({ ...editValues, notes: e.target.value })}
-                                                className="text-xs min-h-[60px]"
-                                                placeholder={t('calculator.notesPlaceholder')}
-                                            />
-                                        </div>
-
-                                        {isAdmin && (
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setEditValues({ ...editValues, isPrivate: !editValues.isPrivate })}
-                                                    className={cn(
-                                                        "flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors border",
-                                                        editValues.isPrivate
-                                                            ? "bg-red-500/10 text-red-600 border-red-200"
-                                                            : "bg-green-500/10 text-green-600 border-green-200"
-                                                    )}
-                                                >
-                                                    {editValues.isPrivate ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-                                                    {editValues.isPrivate ? t('calculator.private') : t('calculator.public')}
-                                                </button>
-                                                <span className="text-[10px] text-muted-foreground">
-                                                    {editValues.isPrivate ? t('calculator.onlyAdmins') : t('calculator.visibleToEveryone')}
-                                                </span>
-                                            </div>
-                                        )}
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col gap-2">
-                                        <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded flex gap-2 items-start">
-                                            <StickyNote className="h-3 w-3 mt-0.5 shrink-0 opacity-50" />
-                                            <p>{transaction.notes}</p>
-                                        </div>
-                                        {transaction.isPrivate && isAdmin && (
-                                            <div className="flex items-center gap-1 text-[10px] text-red-500 font-medium">
-                                                <Lock className="h-3 w-3" /> {t('calculator.private')}
-                                            </div>
-                                        )}
+                                </div>
+
+                                {/* Holder */}
+                                {transaction.holderName && (
+                                    <div className="mb-4 flex items-center gap-2 text-sm">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-muted-foreground">Holder:</span>
+                                        <span className="font-medium">{transaction.holderName}</span>
                                     </div>
                                 )}
-                            </div>
-                        )}
 
-                        {/* Footer / Cost, Return, Profit / Actions */}
-                        <div className="pt-2 border-t border-border/50 space-y-2">
-                            {isEditing ? (
-                                <div className="flex items-center gap-2 sm:gap-3 w-full justify-end animate-in fade-in slide-in-from-top-1">
-                                    <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-10 sm:h-7 px-4 sm:px-2 flex-1 sm:flex-initial">
-                                        <X className="h-4 w-4 sm:h-3 sm:w-3 mr-1" /> {t('common.cancel')}
-                                    </Button>
-                                    <Button size="sm" onClick={handleSave} className="h-10 sm:h-7 px-4 sm:px-2 flex-1 sm:flex-initial">
-                                        <Save className="h-4 w-4 sm:h-3 sm:w-3 mr-1" /> {t('common.update')}
-                                    </Button>
-                                </div>
-                            ) : (
-                                <>
-                                    {/* Cost and Return */}
-                                    <div className="flex justify-between items-center text-xs">
-                                        <div className="flex gap-4">
-                                            <div>
-                                                <span className="text-muted-foreground">{t('transaction.cost')}: </span>
-                                                <span className="font-medium">{formatCurrency(valFiatAmount * valFiatRate, 'LYD')}</span>
+                                {/* Notes */}
+                                {transaction.notes && (
+                                    <div className="mb-4 p-3 bg-muted/30 rounded-xl">
+                                        <p className="text-xs text-muted-foreground">{transaction.notes}</p>
+                                    </div>
+                                )}
+
+                                {/* Footer */}
+                                <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                                    <div className="flex items-center gap-2">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className={cn(
+                                                    "px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all",
+                                                    config.bg, config.color
+                                                )}>
+                                                    <StatusIcon className="h-3.5 w-3.5" />
+                                                    <span>{config.label}</span>
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="start">
+                                                <DropdownMenuLabel>{t('common.update')}</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => handleStatusUpdate('planned')}>
+                                                    <Clock className="mr-2 h-4 w-4 text-blue-500" /> {t('transaction.planned')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
+                                                    <Clock className="mr-2 h-4 w-4 text-orange-500" /> {t('transaction.inProgress')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleStatusUpdate('complete')}>
+                                                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> {t('transaction.complete')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleStatusUpdate('cancelled')}>
+                                                    <XCircle className="mr-2 h-4 w-4 text-red-500" /> {t('transaction.cancelled')}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+
+                                        {transaction.isPrivate && isAdmin && (
+                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500">
+                                                <Lock className="h-3 w-3" />
+                                                <span className="text-xs font-medium">{t('calculator.private')}</span>
                                             </div>
-                                            <div>
-                                                <span className="text-muted-foreground">{t('transaction.return')}: </span>
-                                                <span className="font-medium">{formatCurrency(valUsdtAmount * valUsdtRate, 'LYD')}</span>
-                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="text-right">
+                                        <div className="text-xs text-muted-foreground mb-0.5">{t('transaction.netProfit')}</div>
+                                        <div className={cn(
+                                            "text-lg font-bold",
+                                            transaction.profit >= 0 ? "text-green-500" : "text-red-500"
+                                        )}>
+                                            {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
                                         </div>
                                     </div>
-                                    {/* Net Profit */}
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-muted-foreground">{t('transaction.netProfit')}</span>
-                                        <span className={cn("font-bold", currentProfit >= 0 ? "text-green-500" : "text-red-500")}>
-                                            {currentProfit > 0 ? "+" : ""}{formatCurrency(currentProfit, 'LYD')}
-                                        </span>
-                                    </div>
-                                </>
-                            )}
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+
+            {/* Edit Bottom Sheet */}
+            <BottomSheet
+                isOpen={isEditSheetOpen}
+                onClose={() => setIsEditSheetOpen(false)}
+                title="Edit Transaction"
+            >
+                <div className="p-6 space-y-6">
+                    {/* Date */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Date</label>
+                        <Input
+                            type="date"
+                            value={editValues.createdAt}
+                            onChange={e => setEditValues({ ...editValues, createdAt: e.target.value })}
+                            className="h-12 text-base"
+                        />
+                    </div>
+
+                    {/* Payment Method */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Payment Method</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setEditValues({ ...editValues, paymentMethod: "bank" })}
+                                className={cn(
+                                    "h-12 rounded-xl font-medium transition-all flex items-center justify-center gap-2",
+                                    editValues.paymentMethod === "bank"
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "bg-muted text-muted-foreground"
+                                )}
+                            >
+                                <Building2 className="h-4 w-4" />
+                                {t('calculator.bank')}
+                            </button>
+                            <button
+                                onClick={() => setEditValues({ ...editValues, paymentMethod: "cash" })}
+                                className={cn(
+                                    "h-12 rounded-xl font-medium transition-all flex items-center justify-center gap-2",
+                                    editValues.paymentMethod === "cash"
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "bg-muted text-muted-foreground"
+                                )}
+                            >
+                                <Banknote className="h-4 w-4" />
+                                {t('calculator.cash')}
+                            </button>
                         </div>
                     </div>
+
+                    {/* Buy Section */}
+                    <div className="bg-muted/30 rounded-2xl p-4 space-y-3">
+                        <h3 className="font-semibold text-sm">{t('calculator.buy')}</h3>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Amount</label>
+                            <Input
+                                type="number"
+                                value={editValues.fiatAmount}
+                                onChange={e => setEditValues({ ...editValues, fiatAmount: e.target.value })}
+                                className="h-12 text-base"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Rate (LYD)</label>
+                            <Input
+                                type="number"
+                                value={editValues.fiatRate}
+                                onChange={e => setEditValues({ ...editValues, fiatRate: e.target.value })}
+                                className="h-12 text-base"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Sell Section */}
+                    <div className="bg-muted/30 rounded-2xl p-4 space-y-3">
+                        <h3 className="font-semibold text-sm">{t('calculator.sell')}</h3>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Amount (USDT)</label>
+                            <Input
+                                type="number"
+                                value={editValues.usdtAmount}
+                                onChange={e => setEditValues({ ...editValues, usdtAmount: e.target.value })}
+                                className="h-12 text-base"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-muted-foreground mb-1">Rate (LYD)</label>
+                            <Input
+                                type="number"
+                                value={editValues.usdtRate}
+                                onChange={e => setEditValues({ ...editValues, usdtRate: e.target.value })}
+                                className="h-12 text-base"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Holder */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">{t('transaction.holder')}</label>
+                        <select
+                            value={editValues.holderId}
+                            onChange={(e) => setEditValues({ ...editValues, holderId: e.target.value })}
+                            className="w-full h-12 px-4 text-base border border-input bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                            <option value="">{t('transaction.selectHolder')}</option>
+                            {holders.map((holder) => (
+                                <option key={holder.id} value={holder.id}>
+                                    {holder.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">{t('calculator.notes')}</label>
+                        <Textarea
+                            value={editValues.notes}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditValues({ ...editValues, notes: e.target.value })}
+                            className="min-h-[100px] text-base rounded-xl"
+                            placeholder={t('calculator.notesPlaceholder')}
+                        />
+                    </div>
+
+                    {/* Privacy Toggle */}
+                    {isAdmin && (
+                        <div>
+                            <button
+                                onClick={() => setEditValues({ ...editValues, isPrivate: !editValues.isPrivate })}
+                                className={cn(
+                                    "w-full h-12 rounded-xl font-medium transition-all flex items-center justify-center gap-2",
+                                    editValues.isPrivate
+                                        ? "bg-red-500/10 text-red-600 border-2 border-red-200"
+                                        : "bg-green-500/10 text-green-600 border-2 border-green-200"
+                                )}
+                            >
+                                {editValues.isPrivate ? <Lock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                                {editValues.isPrivate ? t('calculator.private') : t('calculator.public')}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Profit Preview */}
+                    <div className="bg-primary/5 rounded-2xl p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{t('transaction.netProfit')}</span>
+                            <span className={cn(
+                                "text-2xl font-bold",
+                                currentProfit >= 0 ? "text-green-500" : "text-red-500"
+                            )}>
+                                {currentProfit > 0 ? "+" : ""}{formatCurrency(currentProfit, 'LYD')}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsEditSheetOpen(false)}
+                            className="flex-1 h-12 text-base rounded-xl"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            disabled={!hasChanges()}
+                            className="flex-1 h-12 text-base rounded-xl"
+                        >
+                            Save Changes
+                        </Button>
+                    </div>
                 </div>
-            </CardContent>
-        </Card>
+            </BottomSheet>
+        </>
     )
 }
