@@ -118,16 +118,16 @@ export default function HoldersSummaryPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="p-4 rounded-2xl bg-primary/10">
-                                    <Wallet className="h-8 w-8 text-primary" />
+                                    <Wallet className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground mb-1">{t('holdersSummary.totalCash')}</p>
-                                    <p className="text-2xl font-bold">{formatCurrency(totalAllHolders, 'LYD')}</p>
+                                    <p className="text-xl font-bold">{formatCurrency(totalAllHolders, 'LYD')}</p>
                                 </div>
                             </div>
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground mb-1">{t('holdersSummary.totalHolders')}</p>
-                                <p className="text-2xl font-semibold">{holdersSummary.length}</p>
+                                <p className="text-xl font-semibold">{holdersSummary.length}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -171,7 +171,7 @@ export default function HoldersSummaryPage() {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3 flex-1">
                                                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                                    <User className="h-6 w-6 text-primary" />
+                                                    <User className="h-5 w-5 text-primary" />
                                                 </div>
                                                 <div>
                                                     <CardTitle className="text-lg">{holder.name}</CardTitle>
