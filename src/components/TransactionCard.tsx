@@ -55,10 +55,10 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
     const { isAdmin } = useUserRole()
 
     const statusConfig = {
-        planned: { label: t('transaction.planned'), icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10" },
-        in_progress: { label: t('transaction.inProgress'), icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10" },
-        complete: { label: t('transaction.complete'), icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
-        cancelled: { label: t('transaction.cancelled'), icon: XCircle, color: "text-red-500", bg: "bg-red-500/10" },
+        planned: { label: t('transaction.planned'), icon: Clock, color: "text-blue-500", bg: "bg-blue-500/10", stripColor: "bg-blue-500" },
+        in_progress: { label: t('transaction.inProgress'), icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10", stripColor: "bg-orange-500" },
+        complete: { label: t('transaction.complete'), icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10", stripColor: "bg-green-500" },
+        cancelled: { label: t('transaction.cancelled'), icon: XCircle, color: "text-red-500", bg: "bg-red-500/10", stripColor: "bg-red-500" },
     }
 
     const config = statusConfig[transaction.status] || statusConfig['planned']
@@ -315,7 +315,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             <CardContent className="p-0">
                 <div className="flex items-stretch">
                     {/* Status Strip */}
-                    <div className={cn("w-1.5", config.bg.replace("/10", ""))} />
+                    <div className={cn("w-1.5", config.stripColor)} />
 
                     <div className="flex-1 p-4 space-y-3">
                         {/* Header */}
