@@ -409,16 +409,19 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                         </div>
 
                         {/* Amounts (Editable) */}
-                        <div className="flex items-center justify-between text-sm gap-4">
-                            <div className="flex-1">
+                        <div className={cn(
+                            "flex items-center justify-between text-sm",
+                            isEditing ? "flex-col sm:flex-row gap-3 sm:gap-4" : "gap-4"
+                        )}>
+                            <div className={cn("flex-1", isEditing && "w-full")}>
                                 <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.buy')}</div>
                                 {isEditing ? (
-                                    <div className="space-y-1">
+                                    <div className="space-y-2">
                                         <Input
                                             type="number"
                                             value={editValues.fiatAmount}
                                             onChange={e => setEditValues({ ...editValues, fiatAmount: e.target.value })}
-                                            className="h-7 text-sm"
+                                            className="h-9 sm:h-7 text-sm"
                                         />
                                         <div className="flex items-center gap-1">
                                             <span className="text-xs text-muted-foreground">@</span>
@@ -426,7 +429,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                                 type="number"
                                                 value={editValues.fiatRate}
                                                 onChange={e => setEditValues({ ...editValues, fiatRate: e.target.value })}
-                                                className="h-6 text-xs w-20"
+                                                className="h-8 sm:h-6 text-xs flex-1 sm:w-20"
                                             />
                                         </div>
                                     </div>
@@ -442,29 +445,31 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 )}
                             </div>
 
-                            {!arabic ? (
-                                <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
-                            ) : (
-                                <ArrowLeft className="h-4 w-4 text-muted-foreground/50" />
+                            {!isEditing && (
+                                !arabic ? (
+                                    <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
+                                ) : (
+                                    <ArrowLeft className="h-4 w-4 text-muted-foreground/50" />
+                                )
                             )}
 
-                            <div className="flex-1 text-right">
+                            <div className={cn("flex-1 text-right", isEditing && "w-full text-left")}>
                                 <div className="text-muted-foreground text-xs mb-0.5">{t('calculator.sell')}</div>
                                 {isEditing ? (
-                                    <div className="space-y-1 flex flex-col items-end">
+                                    <div className="space-y-2 flex flex-col items-stretch">
                                         <Input
                                             type="number"
                                             value={editValues.usdtAmount}
                                             onChange={e => setEditValues({ ...editValues, usdtAmount: e.target.value })}
-                                            className="h-7 text-sm text-right"
+                                            className="h-9 sm:h-7 text-sm"
                                         />
-                                        <div className="flex items-center gap-1 justify-end">
+                                        <div className="flex items-center gap-1">
                                             <span className="text-xs text-muted-foreground">@</span>
                                             <Input
                                                 type="number"
                                                 value={editValues.usdtRate}
                                                 onChange={e => setEditValues({ ...editValues, usdtRate: e.target.value })}
-                                                className="h-6 text-xs w-20 text-right"
+                                                className="h-8 sm:h-6 text-xs flex-1 sm:w-20"
                                             />
                                         </div>
                                     </div>
@@ -482,13 +487,19 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                         </div>
 
                         {/* Progress Steps */}
-                        <div className="flex items-center gap-4 py-2">
+                        <div className={cn(
+                            "flex items-center py-2",
+                            isEditing ? "flex-col sm:flex-row gap-3 sm:gap-4 items-start" : "gap-4"
+                        )}>
                             <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
                                 <input
                                     type="checkbox"
                                     checked={transaction.stepFiatAcquired}
                                     onChange={() => handleStepToggle('stepFiatAcquired')}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
+                                    className={cn(
+                                        "rounded border-gray-300 text-primary focus:ring-primary",
+                                        isEditing ? "h-4 w-4" : "h-3 w-3"
+                                    )}
                                 />
                                 <span className={transaction.stepFiatAcquired ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatAcquired')}</span>
                             </label>
@@ -497,7 +508,10 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     type="checkbox"
                                     checked={transaction.stepUsdtSold}
                                     onChange={() => handleStepToggle('stepUsdtSold')}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
+                                    className={cn(
+                                        "rounded border-gray-300 text-primary focus:ring-primary",
+                                        isEditing ? "h-4 w-4" : "h-3 w-3"
+                                    )}
                                 />
                                 <span className={transaction.stepUsdtSold ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.usdtSold')}</span>
                             </label>
@@ -506,7 +520,10 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     type="checkbox"
                                     checked={transaction.stepFiatPaid}
                                     onChange={() => handleStepToggle('stepFiatPaid')}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
+                                    className={cn(
+                                        "rounded border-gray-300 text-primary focus:ring-primary",
+                                        isEditing ? "h-4 w-4" : "h-3 w-3"
+                                    )}
                                 />
                                 <span className={transaction.stepFiatPaid ? "text-foreground font-medium" : "text-muted-foreground"}>{t('transaction.fiatPaid')}</span>
                             </label>
@@ -525,7 +542,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     <select
                                         value={editValues.holderId}
                                         onChange={(e) => setEditValues({ ...editValues, holderId: e.target.value })}
-                                        className="w-full h-8 px-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full h-10 sm:h-8 px-3 sm:px-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                     >
                                         <option value="">{t('transaction.selectHolder')}</option>
                                         {holders.map((holder) => (
@@ -535,7 +552,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         ))}
                                     </select>
                                     {transaction.stepFiatPaid && !editValues.holderId && (
-                                        <p className="text-xs text-red-500 mt-1">{t('transaction.holderRequiredNote')}</p>
+                                        <p className="text-xs text-red-500 mt-2">{t('transaction.holderRequiredNote')}</p>
                                     )}
                                 </div>
                             ) : (
@@ -606,12 +623,12 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                         {/* Footer / Cost, Return, Profit / Actions */}
                         <div className="pt-2 border-t border-border/50 space-y-2">
                             {isEditing ? (
-                                <div className="flex items-center gap-2 w-full justify-end animate-in fade-in slide-in-from-top-1">
-                                    <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-7 px-2">
-                                        <X className="h-3 w-3 mr-1" /> {t('common.cancel')}
+                                <div className="flex items-center gap-2 sm:gap-3 w-full justify-end animate-in fade-in slide-in-from-top-1">
+                                    <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-10 sm:h-7 px-4 sm:px-2 flex-1 sm:flex-initial">
+                                        <X className="h-4 w-4 sm:h-3 sm:w-3 mr-1" /> {t('common.cancel')}
                                     </Button>
-                                    <Button size="sm" onClick={handleSave} className="h-7 px-2">
-                                        <Save className="h-3 w-3 mr-1" /> {t('common.update')}
+                                    <Button size="sm" onClick={handleSave} className="h-10 sm:h-7 px-4 sm:px-2 flex-1 sm:flex-initial">
+                                        <Save className="h-4 w-4 sm:h-3 sm:w-3 mr-1" /> {t('common.update')}
                                     </Button>
                                 </div>
                             ) : (
