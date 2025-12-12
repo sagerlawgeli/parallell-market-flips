@@ -106,6 +106,22 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
     const config = statusConfig[transaction.status] || statusConfig['planned']
     const StatusIcon = config.icon
 
+    // Helper to format date for input[type="date"]
+    const formatDateForInput = (dateString: string) => {
+        if (!dateString) return ''
+        // If already in YYYY-MM-DD format, return as is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString
+        }
+        // Otherwise try to parse and format
+        try {
+            const date = new Date(dateString)
+            return date.toISOString().split('T')[0]
+        } catch {
+            return dateString
+        }
+    }
+
     // Edit State
     const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
     const [editValues, setEditValues] = useState({
@@ -114,7 +130,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         usdtAmount: transaction.usdtAmount.toString(),
         usdtRate: transaction.usdtRate.toString(),
         paymentMethod: transaction.paymentMethod,
-        createdAt: transaction.createdAt,
+        createdAt: formatDateForInput(transaction.createdAt),
         notes: transaction.notes || "",
         isPrivate: transaction.isPrivate,
         holderId: transaction.holderId || ""
@@ -146,7 +162,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             usdtAmount: transaction.usdtAmount.toString(),
             usdtRate: transaction.usdtRate.toString(),
             paymentMethod: transaction.paymentMethod,
-            createdAt: transaction.createdAt,
+            createdAt: formatDateForInput(transaction.createdAt),
             notes: transaction.notes || "",
             isPrivate: transaction.isPrivate,
             holderId: transaction.holderId || ""
