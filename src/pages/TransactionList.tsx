@@ -109,7 +109,7 @@ export default function TransactionListPage() {
             )}
 
             {/* Transaction List */}
-            <div className="flex flex-col space-y-2 bg-muted/30 rounded-xl p-4">
+            <div className="flex flex-col space-y-2">
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="text-center">
@@ -144,7 +144,7 @@ export default function TransactionListPage() {
                                 <TransactionCard transaction={txn} onStatusChange={fetchTransactions} />
                                 {index < transactions.length - 1 && (
                                     <div className="flex items-center justify-center py-6">
-                                        <div className="h-px w-full bg-border/60" />
+                                        <div className="h-px w-full bg-border/100" />
                                     </div>
                                 )}
                             </motion.div>
