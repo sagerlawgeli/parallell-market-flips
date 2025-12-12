@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { formatCurrency } from "../lib/utils"
+import { formatCurrency, cn } from "../lib/utils"
 import { TrendingUp, DollarSign, PieChart, Banknote, Building2, Target, Calendar } from "lucide-react"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
@@ -39,10 +40,9 @@ export default function DashboardPage() {
             let query = supabase
                 .from('transactions')
                 .select('*')
-                .eq('status', 'complete') // Only count completed transactions
-                .order('created_at', { ascending: true }) // Oldest first for charts
+                .eq('status', 'complete')
+                .order('created_at', { ascending: true })
 
-            // Apply visibility filter
             if (visibilityFilter === 'private') {
                 query = query.eq('is_private', true)
             } else if (visibilityFilter === 'public') {
@@ -58,15 +58,13 @@ export default function DashboardPage() {
                 return
             }
 
-            // Calculate Metrics
             const totalProfit = data.reduce((sum, t) => sum + (t.profit || 0), 0)
             const cashProfit = data.filter(t => t.payment_method === 'cash').reduce((sum, t) => sum + (t.profit || 0), 0)
             const bankProfit = data.filter(t => t.payment_method === 'bank').reduce((sum, t) => sum + (t.profit || 0), 0)
-            const totalVolume = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0) // Cost basis volume
+            const totalVolume = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
             const totalTransactions = data.length
             const avgProfit = totalTransactions > 0 ? totalProfit / totalTransactions : 0
 
-            // Avg Margin (Profit / Cost)
             const totalCost = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0
 
@@ -80,7 +78,6 @@ export default function DashboardPage() {
                 avgMargin
             })
 
-            // Calculate Current Month Progress
             const now = new Date()
             const currentMonth = now.getMonth()
             const currentYear = now.getFullYear()
@@ -94,11 +91,9 @@ export default function DashboardPage() {
             const target = 18000
             const percentComplete = (currentMonthProfit / target) * 100
 
-            // Calculate days remaining in month
             const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
             const daysRemaining = lastDayOfMonth - now.getDate()
 
-            // Calculate daily average needed to hit target
             const remaining = Math.max(0, target - currentMonthProfit)
             const dailyAverageNeeded = daysRemaining > 0 ? remaining / daysRemaining : 0
 
@@ -110,7 +105,6 @@ export default function DashboardPage() {
                 dailyAverageNeeded
             })
 
-            // Group by Month for Chart
             const monthlyData: { [key: string]: number } = {}
             data.forEach(t => {
                 const date = new Date(t.created_at)
@@ -143,175 +137,242 @@ export default function DashboardPage() {
     }
 
     if (loading) {
-        return <div className="p-8 text-center text-muted-foreground">Loading analytics...</div>
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-center"
+                >
+                    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading analytics...</p>
+                </motion.div>
+            </div>
+        )
     }
 
+    const statCards = [
+        {
+            title: t('analytics.totalProfit'),
+            value: formatCurrency(metrics.totalProfit, 'LYD'),
+            subtitle: t('analytics.lifetime'),
+            icon: TrendingUp,
+            gradient: "from-green-500/20 to-emerald-500/20",
+            iconColor: "text-green-500"
+        },
+        {
+            title: t('analytics.cashProfit'),
+            value: formatCurrency(metrics.cashProfit, 'LYD'),
+            subtitle: t('analytics.cashTxns'),
+            icon: Banknote,
+            gradient: "from-emerald-500/20 to-teal-500/20",
+            iconColor: "text-emerald-500"
+        },
+        {
+            title: t('analytics.bankProfit'),
+            value: formatCurrency(metrics.bankProfit, 'LYD'),
+            subtitle: t('analytics.bankTxns'),
+            icon: Building2,
+            gradient: "from-blue-500/20 to-cyan-500/20",
+            iconColor: "text-blue-500"
+        },
+        {
+            title: t('analytics.avgProfit'),
+            value: formatCurrency(metrics.avgProfit, 'LYD'),
+            subtitle: t('analytics.perTxn'),
+            icon: DollarSign,
+            gradient: "from-violet-500/20 to-purple-500/20",
+            iconColor: "text-violet-500"
+        },
+        {
+            title: t('analytics.avgMargin'),
+            value: `${metrics.avgMargin.toFixed(2)}%`,
+            subtitle: t('analytics.roi'),
+            icon: PieChart,
+            gradient: "from-orange-500/20 to-amber-500/20",
+            iconColor: "text-orange-500"
+        },
+    ]
+
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">{t('analytics.title')}</h1>
-                <p className="text-muted-foreground">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+        >
+            {/* Header */}
+            <div className="flex flex-col gap-3">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{t('analytics.title')}</h1>
+                <p className="text-muted-foreground text-sm md:text-base">
                     {t('analytics.subtitle')}
                 </p>
             </div>
 
-            <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
-
-            <div className="text-sm text-muted-foreground">
-                {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                <div className="text-sm text-muted-foreground">
+                    {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
+                </div>
             </div>
 
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                <Card className="border-t-primary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('analytics.totalProfit')}</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.totalProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">{t('analytics.lifetime')}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-t-primary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('analytics.cashProfit')}</CardTitle>
-                        <Banknote className="h-4 w-4 text-emerald-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.cashProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">{t('analytics.cashTxns')}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-t-primary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('analytics.bankProfit')}</CardTitle>
-                        <Building2 className="h-4 w-4 text-blue-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.bankProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">{t('analytics.bankTxns')}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-t-primary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('analytics.avgProfit')}</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.avgProfit, 'LYD')}</div>
-                        <p className="text-xs text-muted-foreground">{t('analytics.perTxn')}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-t-primary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('analytics.avgMargin')}</CardTitle>
-                        <PieChart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{metrics.avgMargin.toFixed(2)}%</div>
-                        <p className="text-xs text-muted-foreground">{t('analytics.roi')}</p>
-                    </CardContent>
-                </Card>
+                {statCards.map((stat, index) => (
+                    <motion.div
+                        key={stat.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                    >
+                        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                                <stat.icon className={cn("h-4 w-4", stat.iconColor)} />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stat.value}</div>
+                                <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                ))}
             </div>
 
             {/* Monthly Progress Card */}
-            <Card className="border-primary/20 border-t-primary">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                            <Target className="h-5 w-5 text-primary" />
-                            {t('analytics.monthlyTarget')}
-                        </CardTitle>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            {monthlyProgress.daysRemaining} {t('analytics.daysLeft')}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+            >
+                <Card className="border-0 shadow-sm overflow-hidden">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-primary" />
+                                {t('analytics.monthlyTarget')}
+                            </CardTitle>
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs font-medium">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {monthlyProgress.daysRemaining} {t('analytics.daysLeft')}
+                            </div>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {/* Progress Bar */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-baseline">
-                            <span className="text-2xl font-bold">
-                                {formatCurrency(monthlyProgress.currentMonthProfit, 'LYD')}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                                / {formatCurrency(monthlyProgress.target, 'LYD')}
-                            </span>
-                        </div>
-                        <div className="relative h-4 bg-muted rounded-full overflow-hidden">
-                            <div
-                                className={`h-full transition-all duration-500 ${monthlyProgress.percentComplete >= 100 ? 'bg-green-500' :
-                                    monthlyProgress.percentComplete >= 50 ? 'bg-yellow-500' :
-                                        'bg-red-500'
-                                    }`}
-                                style={{ width: `${Math.min(monthlyProgress.percentComplete, 100)}%` }}
-                            />
-                        </div>
-                        <div className="flex justify-between text-xs">
-                            <span className={`font-medium ${monthlyProgress.percentComplete >= 100 ? 'text-green-500' :
-                                monthlyProgress.percentComplete >= 50 ? 'text-yellow-500' :
-                                    'text-red-500'
-                                }`}>
-                                {monthlyProgress.percentComplete.toFixed(1)}% {t('analytics.complete')}
-                            </span>
-                            <span className="text-muted-foreground">
-                                {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')} {t('analytics.remaining')}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Daily Average Needed */}
-                    {monthlyProgress.percentComplete < 100 && monthlyProgress.daysRemaining > 0 && (
-                        <div className="pt-3 border-t border-border/50">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">{t('analytics.dailyAvg')}</span>
-                                <span className="text-lg font-bold text-primary">
-                                    {formatCurrency(monthlyProgress.dailyAverageNeeded, 'LYD')}{t('analytics.perDay')}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-3xl font-bold">
+                                    {formatCurrency(monthlyProgress.currentMonthProfit, 'LYD')}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                    / {formatCurrency(monthlyProgress.target, 'LYD')}
+                                </span>
+                            </div>
+                            <div className="relative h-3 bg-muted/50 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.min(monthlyProgress.percentComplete, 100)}%` }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    className={cn(
+                                        "h-full rounded-full",
+                                        monthlyProgress.percentComplete >= 100 ? 'bg-green-500' :
+                                            monthlyProgress.percentComplete >= 50 ? 'bg-yellow-500' :
+                                                'bg-red-500'
+                                    )}
+                                />
+                            </div>
+                            <div className="flex justify-between text-xs">
+                                <span className={cn(
+                                    "font-semibold",
+                                    monthlyProgress.percentComplete >= 100 ? 'text-green-500' :
+                                        monthlyProgress.percentComplete >= 50 ? 'text-yellow-500' :
+                                            'text-red-500'
+                                )}>
+                                    {monthlyProgress.percentComplete.toFixed(1)}% {t('analytics.complete')}
+                                </span>
+                                <span className="text-muted-foreground">
+                                    {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')} {t('analytics.remaining')}
                                 </span>
                             </div>
                         </div>
-                    )}
 
-                    {monthlyProgress.percentComplete >= 100 && (
-                        <div className="pt-3 border-t border-border/50">
-                            <div className="flex items-center gap-2 text-green-500">
-                                <TrendingUp className="h-4 w-4" />
-                                <span className="text-sm font-medium">{t('analytics.targetAchieved')}</span>
+                        {monthlyProgress.percentComplete < 100 && monthlyProgress.daysRemaining > 0 && (
+                            <div className="pt-3 border-t border-border/50">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">{t('analytics.dailyAvg')}</span>
+                                    <span className="text-lg font-bold text-primary">
+                                        {formatCurrency(monthlyProgress.dailyAverageNeeded, 'LYD')}{t('analytics.perDay')}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                        )}
+
+                        {monthlyProgress.percentComplete >= 100 && (
+                            <div className="pt-3 border-t border-border/50">
+                                <div className="flex items-center gap-2 text-green-500">
+                                    <TrendingUp className="h-4 w-4" />
+                                    <span className="text-sm font-semibold">{t('analytics.targetAchieved')}</span>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </motion.div>
 
             {/* Charts */}
-            <Card className="border-t-primary">
-                <CardHeader>
-                    <CardTitle>{t('analytics.monthlyPerf')}</CardTitle>
-                    <p className="text-xs text-muted-foreground">{t('analytics.monthlyPerfDesc')}</p>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                            <XAxis dataKey="month" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
-                                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                            />
-                            <ReferenceLine y={18000} stroke="#888" strokeDasharray="3 3" label={{ value: 'Target', position: 'right', fill: '#888', fontSize: 12 }} />
-                            <Bar
-                                dataKey="profit"
-                                fill="#22c55e"
-                                radius={[4, 4, 0, 0]}
-                                name="Profit (LYD)"
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-        </div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+            >
+                <Card className="border-0 shadow-sm">
+                    <CardHeader>
+                        <CardTitle>{t('analytics.monthlyPerf')}</CardTitle>
+                        <p className="text-xs text-muted-foreground">{t('analytics.monthlyPerfDesc')}</p>
+                    </CardHeader>
+                    <CardContent className="h-[300px] md:h-[400px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.3} />
+                                <XAxis
+                                    dataKey="month"
+                                    stroke="#888"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis
+                                    stroke="#888"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#1f2937',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                    }}
+                                    cursor={{ fill: 'rgba(255,255,255,0.05)', radius: 8 }}
+                                />
+                                <ReferenceLine
+                                    y={18000}
+                                    stroke="#888"
+                                    strokeDasharray="3 3"
+                                    label={{ value: 'Target', position: 'right', fill: '#888', fontSize: 12 }}
+                                />
+                                <Bar
+                                    dataKey="profit"
+                                    fill="#22c55e"
+                                    radius={[8, 8, 0, 0]}
+                                    name="Profit (LYD)"
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        </motion.div>
     )
 }

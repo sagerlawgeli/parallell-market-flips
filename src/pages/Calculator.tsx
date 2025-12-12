@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card"
 import { Input } from "../components/ui/input"
 import { Button } from "../components/ui/button"
@@ -210,15 +211,19 @@ export default function CalculatorPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">{t('calculator.title')}</h1>
-                <p className="text-muted-foreground">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-6"
+        >
+            <div className="flex flex-col gap-3">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{t('calculator.title')}</h1>
+                <p className="text-muted-foreground text-sm md:text-base">
                     {t('calculator.subtitle')}
                 </p>
             </div>
 
-            <Card className="border-t-4 border-t-primary">
+            <Card className="border-0 shadow-sm">
                 <CardHeader>
                     <div className="flex justify-between items-center">
                         <CardTitle>{t('calculator.newTransaction')}</CardTitle>
@@ -227,7 +232,7 @@ export default function CalculatorPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setPaymentMethod(m => m === "bank" ? "cash" : "bank")}
-                                className="w-24 capitalize"
+                                className="w-24 capitalize rounded-xl"
                             >
                                 {paymentMethod}
                                 {paymentMethod === "bank" ? <Building2 className="ml-2 h-3 w-3" /> : <Banknote className="ml-2 h-3 w-3" />}
@@ -236,7 +241,7 @@ export default function CalculatorPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setCurrency(c => c === "GBP" ? "EUR" : "GBP")}
-                                className="w-20"
+                                className="w-20 rounded-xl"
                             >
                                 {currency} <RefreshCw className="ml-2 h-3 w-3" />
                             </Button>
@@ -258,13 +263,13 @@ export default function CalculatorPage() {
                                     placeholder="1000"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="text-lg"
+                                    className="text-lg h-12 rounded-xl"
                                 />
                             </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="mb-1"
+                                className="mb-1 rounded-xl"
                                 onClick={() => setTargetMode(m => m === "USDT" ? "FIAT" : "USDT")}
                             >
                                 <ArrowRightLeft className="h-4 w-4" />
@@ -281,6 +286,7 @@ export default function CalculatorPage() {
                                     placeholder={currency === "GBP" ? "7.50" : "6.50"}
                                     value={fiatBuyRate}
                                     onChange={(e) => setFiatBuyRate(e.target.value)}
+                                    className="h-11 rounded-xl"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -292,6 +298,7 @@ export default function CalculatorPage() {
                                     placeholder="6.10"
                                     value={usdtSellRate}
                                     onChange={(e) => setUsdtSellRate(e.target.value)}
+                                    className="h-11 rounded-xl"
                                 />
                             </div>
                         </div>
@@ -304,7 +311,7 @@ export default function CalculatorPage() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-6 text-xs text-primary"
+                                    className="h-6 text-xs text-primary rounded-lg"
                                     onClick={handleFetchRates}
                                     disabled={loadingRates}
                                 >
@@ -325,6 +332,7 @@ export default function CalculatorPage() {
                                             type="number"
                                             value={forexRate}
                                             onChange={(e) => setForexRate(e.target.value)}
+                                            className="rounded-xl"
                                         />
                                     </div>
                                 )}
@@ -334,6 +342,7 @@ export default function CalculatorPage() {
                                         type="number"
                                         value={cryptoRate}
                                         onChange={(e) => setCryptoRate(e.target.value)}
+                                        className="rounded-xl"
                                     />
                                 </div>
 
@@ -345,6 +354,7 @@ export default function CalculatorPage() {
                                             value={revolutFee}
                                             onChange={(e) => setRevolutFee(e.target.value)}
                                             placeholder="0.5"
+                                            className="rounded-xl"
                                         />
                                     </div>
                                 )}
@@ -355,6 +365,7 @@ export default function CalculatorPage() {
                                         value={krakenFee}
                                         onChange={(e) => setKrakenFee(e.target.value)}
                                         placeholder="0.26"
+                                        className="rounded-xl"
                                     />
                                 </div>
                             </div>
@@ -375,12 +386,13 @@ export default function CalculatorPage() {
                                 placeholder={t('calculator.notesPlaceholder')}
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
+                                className="h-11 rounded-xl"
                             />
                         </div>
                     </div>
 
                     {/* Results Section */}
-                    <div className="rounded-xl bg-muted/50 p-6 space-y-3">
+                    <div className="rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 p-6 space-y-3 border border-border/50">
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{t('calculator.input')} {currency}</span>
                             <span className="font-mono font-medium">{results.fiatAmount.toFixed(2)}</span>
@@ -430,7 +442,7 @@ export default function CalculatorPage() {
                                 <button
                                     onClick={() => setIsPrivate(!isPrivate)}
                                     className={cn(
-                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors border",
                                         isPrivate
                                             ? "bg-red-500/10 text-red-600 border-red-200"
                                             : "bg-green-500/10 text-green-600 border-green-200"
@@ -447,7 +459,7 @@ export default function CalculatorPage() {
                     )}
 
                     <Button
-                        className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20"
+                        className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20 rounded-xl"
                         size="lg"
                         onClick={handleSaveTransaction}
                         disabled={isSaving}
@@ -461,6 +473,6 @@ export default function CalculatorPage() {
                     </Button>
                 </CardContent>
             </Card>
-        </div>
+        </motion.div>
     )
 }
