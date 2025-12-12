@@ -114,8 +114,7 @@ export default function HoldersSummaryPage() {
                 animate={{ opacity: 1, y: 0 }}
             >
                 <Card className="border-0 shadow-sm overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5" />
-                    <CardContent className="relative pt-6">
+                    <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="p-4 rounded-2xl bg-primary/10">
