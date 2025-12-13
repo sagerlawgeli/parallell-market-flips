@@ -350,7 +350,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                         disabled={!hasChanges()}
                         className="flex-1 h-12 text-base rounded-xl"
                     >
-                        {t('common.saveChanges') || "Save Changes"}
+                        {t('common.save') || "Save Changes"}
                     </Button>
                 </div>
             </div>
