@@ -360,11 +360,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         }
     }
 
-    const progressPercentage = [
-        transaction.stepFiatAcquired,
-        transaction.stepUsdtSold,
-        transaction.stepFiatPaid
-    ].filter(Boolean).length / 3 * 100
 
     return (
         <>
