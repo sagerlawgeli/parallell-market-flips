@@ -14,7 +14,8 @@
         "delete": "Delete",
         "edit": "Edit",
         "loading": "Loading...",
-        "noData": "No data found"
+        "noData": "No data found",
+        "date": "Date"
     },
     "filter": {
         "visibility": "Visibility",
@@ -109,7 +110,8 @@
         "selectHolder": "Select holder...",
         "noHolder": "No holder assigned",
         "holderRequired": "Please assign a holder before marking as paid",
-        "holderRequiredNote": "Holder is required when 'Fiat Paid' is checked"
+        "holderRequiredNote": "Holder is required when 'Fiat Paid' is checked",
+        "editTitle": "Edit Transaction"
     },
     "holders": {
         "title": "Manage Holders",

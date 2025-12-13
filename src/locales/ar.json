@@ -14,7 +14,8 @@
         "delete": "حذف",
         "edit": "تعديل",
         "loading": "جاري التحميل...",
-        "noData": "لا توجد بيانات"
+        "noData": "لا توجد بيانات",
+        "date": "التاريخ"
     },
     "filter": {
         "visibility": "الرؤية",
@@ -109,7 +110,8 @@
         "selectHolder": "اختر أمين...",
         "noHolder": "لم يتم تعيين أمين",
         "holderRequired": "يرجى تعيين أمين قبل وضع علامة كمدفوع",
-        "holderRequiredNote": "الأمين مطلوب عند تحديد 'تم الدفع'"
+        "holderRequiredNote": "الأمين مطلوب عند تحديد 'تم الدفع'",
+        "editTitle": "تعديل المعاملة"
     },
     "holders": {
         "title": "إدارة الأمناء",

@@ -7,19 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { formatCurrency, cn } from "../lib/utils"
 import { ChevronDown, Wallet, User, TrendingUp } from "lucide-react"
 import { format } from "date-fns"
+import { TransactionEditDrawer } from "../components/TransactionEditDrawer"
+import type { Transaction } from "../components/TransactionCard"
 
 interface HolderSummary {
     id: string
     name: string
     totalProfit: number
     transactionCount: number
-    transactions: {
-        id: string
-        type: string
-        createdAt: string
-        profit: number
-        paymentMethod: string
-    }[]
+    transactions: Transaction[]
 }
 
 export default function HoldersSummaryPage() {
@@ -27,6 +23,8 @@ export default function HoldersSummaryPage() {
     const [holdersSummary, setHoldersSummary] = useState<HolderSummary[]>([])
     const [loading, setLoading] = useState(true)
     const [expandedHolderId, setExpandedHolderId] = useState<string | null>(null)
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+    const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
 
     useEffect(() => {
         fetchHoldersSummary()
@@ -43,7 +41,7 @@ export default function HoldersSummaryPage() {
 
             const { data: transactions, error: txError } = await supabase
                 .from('transactions')
-                .select('id, type, created_at, profit, payment_method, holder_id')
+                .select('*')
                 .not('holder_id', 'is', null)
                 .order('created_at', { ascending: false })
 
@@ -69,9 +67,21 @@ export default function HoldersSummaryPage() {
                     summary.transactions.push({
                         id: tx.id,
                         type: tx.type,
-                        createdAt: format(new Date(tx.created_at), 'MMM d, yyyy'),
+                        status: tx.status,
+                        paymentMethod: tx.payment_method,
+                        fiatAmount: tx.fiat_amount,
+                        fiatRate: tx.fiat_buy_rate,
+                        usdtAmount: tx.usdt_amount,
+                        usdtRate: tx.usdt_sell_rate,
                         profit: tx.profit || 0,
-                        paymentMethod: tx.payment_method
+                        createdAt: format(new Date(tx.created_at), 'MMM d, yyyy'),
+                        notes: tx.notes,
+                        isPrivate: tx.is_private,
+                        stepFiatAcquired: tx.step_fiat_acquired,
+                        stepUsdtSold: tx.step_usdt_sold,
+                        stepFiatPaid: tx.step_fiat_paid,
+                        holderId: tx.holder_id,
+                        holderName: summary.name
                     })
                 }
             })
@@ -220,7 +230,11 @@ export default function HoldersSummaryPage() {
                                                                     key={tx.id}
                                                                     initial={{ opacity: 0, x: -20 }}
                                                                     animate={{ opacity: 1, x: 0 }}
-                                                                    className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                                                                    className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedTransaction(tx)
+                                                                        setIsEditDrawerOpen(true)
+                                                                    }}
                                                                 >
                                                                     <div className="flex items-center gap-3">
                                                                         <div className="font-semibold">{tx.type}</div>
@@ -249,6 +263,13 @@ export default function HoldersSummaryPage() {
                     </AnimatePresence>
                 </div>
             )}
+
+            <TransactionEditDrawer
+                transaction={selectedTransaction}
+                isOpen={isEditDrawerOpen}
+                onClose={() => setIsEditDrawerOpen(false)}
+                onUpdate={fetchHoldersSummary}
+            />
         </motion.div>
     )
 }
