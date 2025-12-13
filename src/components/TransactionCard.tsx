@@ -452,18 +452,6 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
 
                                 {/* Progress */}
                                 <div className="mb-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-medium text-muted-foreground">Progress</span>
-                                        <span className="text-xs font-semibold">{Math.round(progressPercentage)}%</span>
-                                    </div>
-                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${progressPercentage}%` }}
-                                            transition={{ duration: 0.5, ease: "easeOut" }}
-                                            className={cn("h-full", config.stripColor)}
-                                        />
-                                    </div>
                                     <div className="flex gap-2 mt-3">
                                         {[
                                             { key: 'stepFiatAcquired', label: t('transaction.fiatAcquired'), checked: transaction.stepFiatAcquired },
