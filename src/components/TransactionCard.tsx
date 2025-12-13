@@ -473,7 +473,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 {transaction.holderName && (
                                     <div className="mb-4 flex items-center gap-2 text-sm">
                                         <User className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Holder:</span>
+                                        <span className="text-muted-foreground">{t('transaction.holder')}:</span>
                                         <span className="font-medium">{transaction.holderName}</span>
                                     </div>
                                 )}
