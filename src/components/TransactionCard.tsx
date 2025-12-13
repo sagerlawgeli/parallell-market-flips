@@ -375,7 +375,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             >
                 <Card className="overflow-hidden transition-all hover:shadow-lg active:scale-[0.98] border-0 shadow-sm">
                     <CardContent className="p-0">
-                        <div className="flex items-stretch">
+                        <div className="flex items-stretch border-t-[4px]">
                             {/* Status Strip */}
                             <div className={cn("w-1", config.stripColor)} />
 
@@ -384,7 +384,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-xl">{transaction.type}</span>
+                                            <span className="font-bold text-lg">{transaction.type}</span>
                                             <div className={cn("w-2 h-2 rounded-full", config.dotColor)} />
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -437,7 +437,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 <div className="flex items-center justify-between mb-4 bg-muted/30 rounded-2xl p-4">
                                     <div className="flex-1">
                                         <div className="text-xs text-muted-foreground mb-1">{t('calculator.buy')}</div>
-                                        <div className="font-semibold text-lg">{formatCurrency(transaction.fiatAmount, transaction.type)}</div>
+                                        <div className="font-semibold text-md">{formatCurrency(transaction.fiatAmount, transaction.type)}</div>
                                         <div className="text-xs text-muted-foreground">@ {transaction.fiatRate} LYD</div>
                                     </div>
 
@@ -445,7 +445,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
 
                                     <div className="flex-1 text-right">
                                         <div className="text-xs text-muted-foreground mb-1">{t('calculator.sell')}</div>
-                                        <div className="font-semibold text-lg">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
+                                        <div className="font-semibold text-md">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
                                         <div className="text-xs text-muted-foreground">@ {transaction.usdtRate} LYD</div>
                                     </div>
                                 </div>
@@ -465,7 +465,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                                     "flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all",
                                                     checked
                                                         ? cn(config.bg, config.color)
-                                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                        : "bg-muted text-muted-foreground hover:bg-muted/80 text-orange-500"
                                                 )}
                                             >
                                                 {label}
@@ -532,7 +532,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                     <div className="text-right">
                                         <div className="text-xs text-muted-foreground mb-0.5">{t('transaction.netProfit')}</div>
                                         <div className={cn(
-                                            "text-lg font-bold",
+                                            "text-md font-bold",
                                             transaction.profit >= 0 ? "text-green-500" : "text-red-500"
                                         )}>
                                             {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
