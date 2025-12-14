@@ -333,19 +333,23 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 )}
 
                                 {/* Cost & Return Summary */}
-                                <div className="flex items-center justify-between text-xs mb-3 px-1">
-                                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
-                                        <div className="p-1 rounded-md bg-red-500/10 text-red-500/80">
-                                            <ArrowDownRight className="h-3 w-3" />
+                                <div className="flex flex-col gap-2 text-xs mb-3 px-1">
+                                    <div className="flex items-center justify-between text-muted-foreground/80">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="p-1 rounded-md bg-red-500/10 text-red-500/80">
+                                                <ArrowDownRight className="h-3 w-3" />
+                                            </div>
+                                            <span>{t('calculator.cost')}:</span>
                                         </div>
-                                        <span>{t('calculator.cost')}:</span>
                                         <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.fiatAmount * transaction.fiatRate, 'LYD')}</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
-                                        <div className="p-1 rounded-md bg-green-500/10 text-green-500/80">
-                                            <ArrowUpRight className="h-3 w-3" />
+                                    <div className="flex items-center justify-between text-muted-foreground/80">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="p-1 rounded-md bg-green-500/10 text-green-500/80">
+                                                <ArrowUpRight className="h-3 w-3" />
+                                            </div>
+                                            <span>{t('calculator.return')}:</span>
                                         </div>
-                                        <span>{t('calculator.return')}:</span>
                                         <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.usdtAmount * transaction.usdtRate, 'LYD')}</span>
                                     </div>
                                 </div>
