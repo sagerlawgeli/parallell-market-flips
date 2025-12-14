@@ -217,11 +217,11 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             >
                 <Card className="overflow-hidden transition-all hover:shadow-lg active:scale-[0.98] border-0 shadow-sm">
                     <CardContent className="p-0">
-                        <div className="flex items-stretch border-t-[4px]">
+                        <div className="relative border-t-[4px]">
                             {/* Status Strip */}
-                            <div className={cn("w-1", config.stripColor)} />
+                            <div className={cn("absolute top-0 bottom-0 start-0 w-1", config.stripColor)} />
 
-                            <div className="flex-1 p-4 md:p-5">
+                            <div className="p-4 md:p-5 ps-5 md:ps-6">
                                 {/* Header */}
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
@@ -306,8 +306,8 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                                 className={cn(
                                                     "flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all",
                                                     checked
-                                                        ? cn(config.bg, config.color)
-                                                        : "bg-muted text-muted-foreground hover:bg-muted/80 text-orange-500"
+                                                        ? "bg-green-500/10 text-green-500"
+                                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
                                                 )}
                                             >
                                                 {label}
@@ -389,10 +389,10 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         )}
                                     </div>
 
-                                    <div className="text-right">
+                                    <div className="text-right shrink-0">
                                         <div className="text-xs text-muted-foreground mb-0.5">{t('transaction.netProfit')}</div>
                                         <div className={cn(
-                                            "text-md font-bold",
+                                            "text-md font-bold break-words",
                                             transaction.profit >= 0 ? "text-green-500" : "text-red-500"
                                         )}>
                                             {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
