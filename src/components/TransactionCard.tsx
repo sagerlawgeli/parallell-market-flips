@@ -28,6 +28,7 @@ import {
 } from "./ui/dropdown-menu"
 import { Button } from "./ui/button"
 import { TransactionEditDrawer } from "./TransactionEditDrawer"
+import { HolderSelectionDialog } from "./HolderSelectionDialog"
 
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
@@ -110,6 +111,7 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
 
 
     const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
+    const [isHolderDialogOpen, setIsHolderDialogOpen] = useState(false)
 
     const handleStepToggle = async (step: 'stepFiatAcquired' | 'stepUsdtSold' | 'stepFiatPaid') => {
         try {
@@ -117,13 +119,15 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
             if (!user) return
 
             const newValue = !transaction[step]
-            const dbColumn = step === 'stepFiatAcquired' ? 'step_fiat_acquired' :
-                step === 'stepUsdtSold' ? 'step_usdt_sold' : 'step_fiat_paid'
 
+            // If trying to mark as paid but no holder, open selection dialog
             if (step === 'stepFiatPaid' && newValue && !transaction.holderId) {
-                toast.error(t('transaction.holderRequired'))
+                setIsHolderDialogOpen(true)
                 return
             }
+
+            const dbColumn = step === 'stepFiatAcquired' ? 'step_fiat_acquired' :
+                step === 'stepUsdtSold' ? 'step_usdt_sold' : 'step_fiat_paid'
 
             let newStatus = transaction.status
             if (newValue && transaction.status === 'planned') {
@@ -185,6 +189,51 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         } catch (error) {
             console.error("Error updating status:", error)
             toast.error("Failed to update status")
+        }
+    }
+
+    const handleHolderSelection = async (holderId: string) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            // 1. Update holder
+            // 2. Mark step_fiat_paid as true
+            // 3. Update status if needed
+
+            let newStatus = transaction.status
+            if (transaction.status === 'planned') {
+                newStatus = 'in_progress'
+            }
+
+            const isFiatAcquired = transaction.stepFiatAcquired
+            const isUsdtSold = transaction.stepUsdtSold
+            const isFiatPaid = true // We are setting this to true
+
+            if (isFiatAcquired && isUsdtSold && isFiatPaid) {
+                newStatus = 'complete'
+            }
+
+            const updates: any = {
+                holder_id: holderId,
+                step_fiat_paid: true,
+                status: newStatus
+            }
+
+            const { error } = await supabase
+                .from('transactions')
+                .update(updates)
+                .eq('id', transaction.id)
+
+            if (error) throw error
+
+            setIsHolderDialogOpen(false)
+            toast.success(t('transaction.holderAssigned') || "Holder assigned and marked as paid")
+            if (onStatusChange) onStatusChange()
+
+        } catch (error) {
+            console.error("Error assigning holder:", error)
+            toast.error("Failed to assign holder")
         }
     }
 
@@ -415,6 +464,12 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                 isOpen={isEditSheetOpen}
                 onClose={() => setIsEditSheetOpen(false)}
                 onUpdate={onStatusChange}
+            />
+
+            <HolderSelectionDialog
+                isOpen={isHolderDialogOpen}
+                onClose={() => setIsHolderDialogOpen(false)}
+                onSelect={handleHolderSelection}
             />
         </>
     )
