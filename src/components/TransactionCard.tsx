@@ -14,7 +14,9 @@ import {
     Building2,
     Lock,
     User,
-    Edit3
+    Edit3,
+    ArrowDownRight,
+    ArrowUpRight
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -329,6 +331,24 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         <p className="text-xs text-muted-foreground">{transaction.notes}</p>
                                     </div>
                                 )}
+
+                                {/* Cost & Return Summary */}
+                                <div className="flex items-center justify-between text-xs mb-3 px-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                                        <div className="p-1 rounded-md bg-red-500/10 text-red-500/80">
+                                            <ArrowDownRight className="h-3 w-3" />
+                                        </div>
+                                        <span>{t('calculator.cost')}:</span>
+                                        <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.fiatAmount * transaction.fiatRate, 'LYD')}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-muted-foreground/80">
+                                        <div className="p-1 rounded-md bg-green-500/10 text-green-500/80">
+                                            <ArrowUpRight className="h-3 w-3" />
+                                        </div>
+                                        <span>{t('calculator.return')}:</span>
+                                        <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.usdtAmount * transaction.usdtRate, 'LYD')}</span>
+                                    </div>
+                                </div>
 
                                 {/* Footer */}
                                 <div className="flex items-center justify-between pt-3 border-t border-border/50">
