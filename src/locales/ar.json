@@ -44,6 +44,7 @@
         "title": "السجل",
         "subtitle": "سجل جميع معاملات المراجحة.",
         "noTransactions": "لا توجد معاملات.",
+        "fetchError": "فشل في تحميل المعاملة",
         "transactionCount": "{{count}} معاملة",
         "transactionCountSingular": "{{count}} معاملة"
     },

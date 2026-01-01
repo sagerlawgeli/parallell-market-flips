@@ -44,6 +44,7 @@
         "title": "Ledger",
         "subtitle": "History of all your arbitrage transactions.",
         "noTransactions": "No transactions found.",
+        "fetchError": "Failed to load transaction",
         "transactionCount": "{{count}} transactions",
         "transactionCountSingular": "{{count}} transaction"
     },
