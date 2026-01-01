@@ -13,3 +13,9 @@ export function formatCurrency(amount: number, currency: string = 'USD') {
         maximumFractionDigits: 2,
     }).format(amount)
 }
+
+export function getDisplayId(seqId: number | undefined, paymentMethod: string) {
+    if (!seqId) return ''
+    const prefix = paymentMethod === 'cash' ? 'CSH' : 'BNK'
+    return `${prefix}-${seqId}`
+}

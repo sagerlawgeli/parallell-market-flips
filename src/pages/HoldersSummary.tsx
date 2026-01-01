@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { formatCurrency, cn } from "../lib/utils"
+import { formatCurrency, cn, getDisplayId } from "../lib/utils"
 import { ChevronDown, Wallet, User, TrendingUp } from "lucide-react"
 import { format } from "date-fns"
 import { TransactionEditDrawer } from "../components/TransactionEditDrawer"
@@ -41,7 +41,7 @@ export default function HoldersSummaryPage() {
 
             const { data: transactions, error: txError } = await supabase
                 .from('transactions')
-                .select('*')
+                .select('*, seq_id')
                 .not('holder_id', 'is', null)
                 .order('created_at', { ascending: false })
 
@@ -81,7 +81,8 @@ export default function HoldersSummaryPage() {
                         stepUsdtSold: tx.step_usdt_sold,
                         stepFiatPaid: tx.step_fiat_paid,
                         holderId: tx.holder_id,
-                        holderName: summary.name
+                        holderName: summary.name,
+                        seqId: tx.seq_id
                     })
                 }
             })
@@ -237,6 +238,9 @@ export default function HoldersSummaryPage() {
                                                                     }}
                                                                 >
                                                                     <div className="flex items-center gap-3">
+                                                                        <div className="font-mono bg-background px-1.5 py-0.5 rounded text-[10px] font-bold text-muted-foreground tracking-wider uppercase">
+                                                                            {getDisplayId(tx.seqId, tx.paymentMethod)}
+                                                                        </div>
                                                                         <div className="font-semibold">{tx.type}</div>
                                                                         <div className="text-xs text-muted-foreground">{tx.createdAt}</div>
                                                                         <div className="text-xs px-2 py-1 rounded-full bg-background text-muted-foreground uppercase font-medium">

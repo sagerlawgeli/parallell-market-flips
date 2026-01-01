@@ -25,6 +25,7 @@ export default function TransactionListPage() {
                 .from('transactions')
                 .select(`
                     *,
+                    seq_id,
                     holders (
                         id,
                         name
@@ -65,7 +66,8 @@ export default function TransactionListPage() {
                 stepFiatPaid: txn.step_fiat_paid || false,
                 isPrivate: txn.is_private ?? true,
                 holderId: txn.holder_id,
-                holderName: txn.holders?.name
+                holderName: txn.holders?.name,
+                seqId: txn.seq_id
             }))
 
             setTransactions(formattedTransactions)

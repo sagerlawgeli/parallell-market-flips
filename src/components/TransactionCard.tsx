@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "./ui/card"
-import { formatCurrency, cn } from "../lib/utils"
+import { formatCurrency, cn, getDisplayId } from "../lib/utils"
 import {
     ArrowRight,
     CheckCircle2,
@@ -59,6 +59,7 @@ export interface Transaction {
     // Holder tracking
     holderId?: string
     holderName?: string
+    seqId?: number
 }
 
 interface TransactionCardProps {
@@ -279,6 +280,9 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                             <div className={cn("w-2 h-2 rounded-full", config.dotColor)} />
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-[10px] font-bold text-foreground/70 tracking-wider">
+                                                {getDisplayId(transaction.seqId, transaction.paymentMethod)}
+                                            </span>
                                             <span>{transaction.createdAt}</span>
                                             <span>•</span>
                                             <div className="flex items-center gap-1">
