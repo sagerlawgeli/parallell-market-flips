@@ -6,7 +6,8 @@ import {
     Calendar,
     Lock,
     Share2,
-    MessageSquare
+    MessageSquare,
+    RefreshCw
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -56,6 +57,14 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         isPrivate: true,
         holderId: ""
     })
+    const [manualProfit, setManualProfit] = useState<string>("")
+
+    // Calculate live profit preview
+    const valFiatAmount = parseFloat(editValues.fiatAmount) || 0
+    const valFiatRate = parseFloat(editValues.fiatRate) || 0
+    const valUsdtAmount = parseFloat(editValues.usdtAmount) || 0
+    const valUsdtRate = parseFloat(editValues.usdtRate) || 0
+    const calculatedProfit = (valUsdtAmount * valUsdtRate) - (valFiatAmount * valFiatRate)
 
     // Fetch holders
     useEffect(() => {
@@ -86,8 +95,16 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 isPrivate: transaction.isPrivate,
                 holderId: transaction.holderId || ""
             })
+            setManualProfit(transaction.profit.toString())
         }
     }, [transaction])
+
+    // Update manual profit when calculations change, but only if not manually overridden or when first loading
+    useEffect(() => {
+        // We only want to auto-sync if the manual profit exactly matches the previous calculated profit
+        // or if we want it to always sync unless the user explicitly edits it.
+        // For simplicity, let's just provide a "Sync" button or allow manual override.
+    }, [calculatedProfit])
 
     if (!transaction) return null
 
@@ -101,7 +118,8 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             editValues.createdAt !== formatDateForInput(transaction.createdAt) ||
             editValues.notes !== (transaction.notes || "") ||
             editValues.isPrivate !== transaction.isPrivate ||
-            editValues.holderId !== (transaction.holderId || "")
+            editValues.holderId !== (transaction.holderId || "") ||
+            parseFloat(manualProfit) !== transaction.profit
         )
     }
 
@@ -125,7 +143,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
 
         const cost = parseFloat(editValues.fiatAmount) * parseFloat(editValues.fiatRate)
         const returns = parseFloat(editValues.usdtAmount) * parseFloat(editValues.usdtRate)
-        const profit = returns - cost
+        const profit = parseFloat(manualProfit) || 0
         const date = new Date(editValues.createdAt).toLocaleString('en-US', {
             dateStyle: 'medium',
             timeStyle: 'short'
@@ -151,13 +169,6 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         toast.success(t('common.copiedToWhatsapp') || "Formatted for WhatsApp & copied!")
     }
 
-    // Calculate live profit preview
-    const valFiatAmount = parseFloat(editValues.fiatAmount) || 0
-    const valFiatRate = parseFloat(editValues.fiatRate) || 0
-    const valUsdtAmount = parseFloat(editValues.usdtAmount) || 0
-    const valUsdtRate = parseFloat(editValues.usdtRate) || 0
-    const currentProfit = (valUsdtAmount * valUsdtRate) - (valFiatAmount * valFiatRate)
-
     const handleSave = async () => {
         if (!hasChanges()) {
             onClose()
@@ -173,6 +184,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 fiat_buy_rate: valFiatRate,
                 usdt_amount: valUsdtAmount,
                 usdt_sell_rate: valUsdtRate,
+                profit: parseFloat(manualProfit) || calculatedProfit,
                 payment_method: editValues.paymentMethod,
                 notes: editValues.notes,
                 is_private: editValues.isPrivate,
@@ -385,15 +397,34 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 )}
 
                 {/* Profit Preview */}
-                <div className="bg-primary/5 rounded-2xl p-4">
-                    <div className="flex items-center justify-between">
+                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                    <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">{t('transaction.netProfit')}</span>
-                        <span className={cn(
-                            "text-2xl font-bold",
-                            currentProfit >= 0 ? "text-green-500" : "text-red-500"
-                        )}>
-                            {currentProfit > 0 ? "+" : ""}{formatCurrency(currentProfit, 'LYD')}
-                        </span>
+                        {Math.abs(parseFloat(manualProfit) - calculatedProfit) > 0.01 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setManualProfit(calculatedProfit.toFixed(2))}
+                                className="h-6 text-[10px] text-muted-foreground hover:text-primary px-2"
+                            >
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                {t('calculator.fetchLive') || "Reset"}
+                            </Button>
+                        )}
+                    </div>
+                    <div className="relative">
+                        <Input
+                            type="number"
+                            value={manualProfit}
+                            onChange={e => setManualProfit(e.target.value)}
+                            className={cn(
+                                "text-3xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-right",
+                                parseFloat(manualProfit) >= 0 ? "text-green-500" : "text-red-500"
+                            )}
+                        />
+                        <div className="absolute left-0 bottom-0 text-[10px] text-muted-foreground italic">
+                            {Math.abs(parseFloat(manualProfit) - calculatedProfit) > 0.01 ? "Manual override" : "Calculated"}
+                        </div>
                     </div>
                 </div>
 
