@@ -17,7 +17,12 @@
         "noData": "No data found",
         "date": "Date",
         "from": "From",
-        "to": "To"
+        "to": "To",
+        "share": "Share",
+        "shareWhatsapp": "Share to WhatsApp",
+        "copyLink": "Copy Public Link",
+        "linkCopied": "Link copied to clipboard",
+        "copiedToWhatsapp": "Formatted for WhatsApp & copied!"
     },
     "filter": {
         "visibility": "Visibility",

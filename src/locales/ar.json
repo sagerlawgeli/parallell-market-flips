@@ -17,7 +17,12 @@
         "noData": "لا توجد بيانات",
         "date": "التاريخ",
         "from": "من",
-        "to": "إلى"
+        "to": "إلى",
+        "share": "مشاركة",
+        "shareWhatsapp": "مشاركة عبر واتساب",
+        "copyLink": "نسخ الرابط العام",
+        "linkCopied": "تم نسخ الرابط",
+        "copiedToWhatsapp": "تم التنسيق للواتساب والنسخ!"
     },
     "filter": {
         "visibility": "الرؤية",

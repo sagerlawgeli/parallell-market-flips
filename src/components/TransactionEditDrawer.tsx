@@ -1,15 +1,12 @@
 import { useState, useEffect, useRef } from "react"
 import { formatCurrency, cn } from "../lib/utils"
 import {
-    X,
-    Save,
-    Trash2,
-    TrendingUp,
-    CheckCircle2,
     Building2,
     Banknote,
     Calendar,
-    Lock
+    Lock,
+    Share2,
+    MessageSquare
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -29,7 +26,7 @@ interface TransactionEditDrawerProps {
 }
 
 export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }: TransactionEditDrawerProps) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { isAdmin } = useUserRole()
     const dateInputRef = useRef<HTMLInputElement>(null)
     const [holders, setHolders] = useState<Array<{ id: string; name: string }>>([])
@@ -106,6 +103,52 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             editValues.isPrivate !== transaction.isPrivate ||
             editValues.holderId !== (transaction.holderId || "")
         )
+    }
+
+    const getDisplayId = (paymentMethod: 'cash' | 'bank', seqId: number) => {
+        const prefix = paymentMethod === 'cash' ? 'C' : 'B'
+        return `${prefix}${seqId.toString().padStart(5, '0')}`
+    }
+
+    const shareTransaction = async (type: 'text' | 'link') => {
+        if (!transaction) return
+
+        const displayId = getDisplayId(transaction.paymentMethod, transaction.seqId || 0)
+        const baseUrl = window.location.origin
+        const shareUrl = `${baseUrl}/t/${displayId}`
+
+        if (type === 'link') {
+            await navigator.clipboard.writeText(shareUrl)
+            toast.success(t('common.linkCopied') || "Link copied to clipboard")
+            return
+        }
+
+        const cost = parseFloat(editValues.fiatAmount) * parseFloat(editValues.fiatRate)
+        const returns = parseFloat(editValues.usdtAmount) * parseFloat(editValues.usdtRate)
+        const profit = returns - cost
+        const date = new Date(editValues.createdAt).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        })
+
+        const message = i18n.language === 'ar'
+            ? `📦 *تفاصيل المعاملة - ${displayId}*\n\n` +
+            `🕒 *الحالة:* ${t(`transaction.${transaction.status}`)}\n` +
+            `💰 *التكلفة:* ${formatCurrency(cost, 'LYD')}\n` +
+            `📈 *العائد:* ${formatCurrency(returns, 'LYD')}\n` +
+            `💵 *الربح:* ${formatCurrency(profit, 'LYD')}\n` +
+            `📅 *التاريخ:* ${date}\n\n` +
+            `🔗 *الرابط:* ${shareUrl}`
+            : `📦 *Transaction Details - ${displayId}*\n\n` +
+            `🕒 *Status:* ${t(`transaction.${transaction.status}`)}\n` +
+            `💰 *Cost:* ${formatCurrency(cost, 'LYD')}\n` +
+            `📈 *Return:* ${formatCurrency(returns, 'LYD')}\n` +
+            `💵 *Profit:* ${formatCurrency(profit, 'LYD')}\n` +
+            `📅 *Date:* ${date}\n\n` +
+            `🔗 *Link:* ${shareUrl}`
+
+        await navigator.clipboard.writeText(message)
+        toast.success(t('common.copiedToWhatsapp') || "Formatted for WhatsApp & copied!")
     }
 
     // Calculate live profit preview
@@ -355,7 +398,26 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4">
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-muted/30">
+                    <Button
+                        variant="ghost"
+                        onClick={() => shareTransaction('text')}
+                        className="h-12 text-sm rounded-xl bg-green-500/5 text-green-600 hover:bg-green-500/10 hover:text-green-700"
+                    >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {t('common.shareWhatsapp')}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        onClick={() => shareTransaction('link')}
+                        className="h-12 text-sm rounded-xl bg-primary/5 text-primary hover:bg-primary/10"
+                    >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        {t('common.copyLink')}
+                    </Button>
+                </div>
+
+                <div className="flex gap-3 mt-4">
                     <Button
                         variant="outline"
                         onClick={onClose}

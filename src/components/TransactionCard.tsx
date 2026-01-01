@@ -16,7 +16,9 @@ import {
     User,
     Edit3,
     ArrowDownRight,
-    ArrowUpRight
+    ArrowUpRight,
+    Share2,
+    MessageSquare
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -68,7 +70,7 @@ interface TransactionCardProps {
 }
 
 export function TransactionCard({ transaction, onStatusChange }: TransactionCardProps) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { isAdmin } = useUserRole()
 
     const statusConfig = {
@@ -257,6 +259,44 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
         }
     }
 
+    const shareTransaction = async (type: 'text' | 'link') => {
+        const displayId = getDisplayId(transaction.seqId, transaction.paymentMethod)
+        const baseUrl = window.location.origin
+        const shareUrl = `${baseUrl}/t/${displayId}`
+
+        if (type === 'link') {
+            await navigator.clipboard.writeText(shareUrl)
+            toast.success(t('common.linkCopied') || "Link copied to clipboard")
+            return
+        }
+
+        const cost = transaction.fiatAmount * transaction.fiatRate
+        const returns = transaction.usdtAmount * transaction.usdtRate
+        const date = new Date(transaction.createdAt).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        })
+
+        const message = i18n.language === 'ar'
+            ? `📦 *تفاصيل المعاملة - ${displayId}*\n\n` +
+            `🕒 *الحالة:* ${t(`transaction.${transaction.status}`)}\n` +
+            `💰 *التكلفة:* ${formatCurrency(cost, 'LYD')}\n` +
+            `📈 *العائد:* ${formatCurrency(returns, 'LYD')}\n` +
+            `💵 *الربح:* ${formatCurrency(transaction.profit, 'LYD')}\n` +
+            `📅 *التاريخ:* ${date}\n\n` +
+            `🔗 *الرابط:* ${shareUrl}`
+            : `📦 *Transaction Details - ${displayId}*\n\n` +
+            `🕒 *Status:* ${t(`transaction.${transaction.status}`)}\n` +
+            `💰 *Cost:* ${formatCurrency(cost, 'LYD')}\n` +
+            `📈 *Return:* ${formatCurrency(returns, 'LYD')}\n` +
+            `💵 *Profit:* ${formatCurrency(transaction.profit, 'LYD')}\n` +
+            `📅 *Date:* ${date}\n\n` +
+            `🔗 *Link:* ${shareUrl}`
+
+        await navigator.clipboard.writeText(message)
+        toast.success(t('common.copiedToWhatsapp') || "Formatted for WhatsApp & copied!")
+    }
+
 
     return (
         <>
@@ -299,8 +339,29 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         <Button
                                             variant="ghost"
                                             size="icon"
+                                            onClick={() => shareTransaction('text')}
+                                            className="h-8 w-8 hover:bg-green-500/10 hover:text-green-600 transition-colors"
+                                            title={t('common.shareWhatsapp') || "Share to WhatsApp"}
+                                        >
+                                            <MessageSquare className="h-4 w-4" />
+                                        </Button>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => shareTransaction('link')}
+                                            className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
+                                            title={t('common.copyLink') || "Copy Public Link"}
+                                        >
+                                            <Share2 className="h-4 w-4" />
+                                        </Button>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
                                             onClick={() => setIsEditSheetOpen(true)}
                                             className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                                            title={t('common.edit') || "Edit"}
                                         >
                                             <Edit3 className="h-4 w-4" />
                                         </Button>
@@ -314,10 +375,16 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
-                                                    <Edit3 className="mr-2 h-4 w-4" /> Edit
+                                                    <Edit3 className="mr-2 h-4 w-4" /> {t('common.edit')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => shareTransaction('text')}>
+                                                    <MessageSquare className="mr-2 h-4 w-4" /> {t('common.shareWhatsapp') || "Share to WhatsApp"}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => shareTransaction('link')}>
+                                                    <Share2 className="mr-2 h-4 w-4" /> {t('common.copyLink') || "Copy Public Link"}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem disabled>
-                                                    <History className="mr-2 h-4 w-4" /> View History
+                                                    <History className="mr-2 h-4 w-4" /> {t('transaction.viewHistory')}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">

@@ -9,6 +9,7 @@ import DashboardPage from "./pages/Dashboard"
 import AuthPage from "./pages/Auth"
 import HoldersPage from "./pages/Holders"
 import HoldersSummaryPage from "./pages/HoldersSummary"
+import PublicTransactionPage from "./pages/PublicTransactionPage"
 import "./i18n"
 import { useTranslation } from "react-i18next"
 
@@ -47,6 +48,7 @@ function App() {
       <Toaster position="top-center" richColors />
       <Routes>
         <Route path="/login" element={!session ? <AuthPage /> : <Navigate to="/" />} />
+        <Route path="/t/:seqId" element={<PublicTransactionPage />} />
 
         <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
           <Route index element={<TransactionListPage />} />
