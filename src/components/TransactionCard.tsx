@@ -67,9 +67,10 @@ export interface Transaction {
 interface TransactionCardProps {
     transaction: Transaction
     onStatusChange?: () => void
+    readOnly?: boolean
 }
 
-export function TransactionCard({ transaction, onStatusChange }: TransactionCardProps) {
+export function TransactionCard({ transaction, onStatusChange, readOnly = false }: TransactionCardProps) {
     const { t, i18n } = useTranslation()
     const { isAdmin } = useUserRole()
 
@@ -335,64 +336,66 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => shareTransaction('text')}
-                                            className="h-8 w-8 hover:bg-green-500/10 hover:text-green-600 transition-colors"
-                                            title={t('common.shareWhatsapp') || "Share to WhatsApp"}
-                                        >
-                                            <MessageSquare className="h-4 w-4" />
-                                        </Button>
+                                    {!readOnly && (
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => shareTransaction('text')}
+                                                className="h-8 w-8 hover:bg-green-500/10 hover:text-green-600 transition-colors"
+                                                title={t('common.shareWhatsapp') || "Share to WhatsApp"}
+                                            >
+                                                <MessageSquare className="h-4 w-4" />
+                                            </Button>
 
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => shareTransaction('link')}
-                                            className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
-                                            title={t('common.copyLink') || "Copy Public Link"}
-                                        >
-                                            <Share2 className="h-4 w-4" />
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => shareTransaction('link')}
+                                                className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
+                                                title={t('common.copyLink') || "Copy Public Link"}
+                                            >
+                                                <Share2 className="h-4 w-4" />
+                                            </Button>
 
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setIsEditSheetOpen(true)}
-                                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
-                                            title={t('common.edit') || "Edit"}
-                                        >
-                                            <Edit3 className="h-4 w-4" />
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setIsEditSheetOpen(true)}
+                                                className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                                                title={t('common.edit') || "Edit"}
+                                            >
+                                                <Edit3 className="h-4 w-4" />
+                                            </Button>
 
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
-                                                    <Edit3 className="mr-2 h-4 w-4" /> {t('common.edit')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => shareTransaction('text')}>
-                                                    <MessageSquare className="mr-2 h-4 w-4" /> {t('common.shareWhatsapp') || "Share to WhatsApp"}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => shareTransaction('link')}>
-                                                    <Share2 className="mr-2 h-4 w-4" /> {t('common.copyLink') || "Copy Public Link"}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem disabled>
-                                                    <History className="mr-2 h-4 w-4" /> {t('transaction.viewHistory')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
-                                                    <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
+                                                        <Edit3 className="mr-2 h-4 w-4" /> {t('common.edit')}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => shareTransaction('text')}>
+                                                        <MessageSquare className="mr-2 h-4 w-4" /> {t('common.shareWhatsapp') || "Share to WhatsApp"}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => shareTransaction('link')}>
+                                                        <Share2 className="mr-2 h-4 w-4" /> {t('common.copyLink') || "Copy Public Link"}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem disabled>
+                                                        <History className="mr-2 h-4 w-4" /> {t('transaction.viewHistory')}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={handleDelete} className="text-red-500 focus:text-red-500">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Amounts */}
@@ -422,12 +425,13 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                         ].map(({ key, label, checked }) => (
                                             <button
                                                 key={key}
-                                                onClick={() => handleStepToggle(key as any)}
+                                                onClick={() => !readOnly && handleStepToggle(key as any)}
                                                 className={cn(
                                                     "flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all",
                                                     checked
                                                         ? "bg-green-500/10 text-green-500"
-                                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                        : "bg-muted text-muted-foreground hover:bg-muted/80",
+                                                    readOnly && "cursor-default pointer-events-none"
                                                 )}
                                             >
                                                 {label}
@@ -477,33 +481,43 @@ export function TransactionCard({ transaction, onStatusChange }: TransactionCard
                                 {/* Footer */}
                                 <div className="flex items-center justify-between pt-3 border-t border-border/50">
                                     <div className="flex items-center gap-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <button className={cn(
-                                                    "px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all",
-                                                    config.bg, config.color
-                                                )}>
-                                                    <StatusIcon className="h-3.5 w-3.5" />
-                                                    <span>{config.label}</span>
-                                                </button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="start">
-                                                <DropdownMenuLabel>{t('common.update')}</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => handleStatusUpdate('planned')}>
-                                                    <Clock className="mr-2 h-4 w-4 text-blue-500" /> {t('transaction.planned')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
-                                                    <Clock className="mr-2 h-4 w-4 text-orange-500" /> {t('transaction.inProgress')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleStatusUpdate('complete')}>
-                                                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> {t('transaction.complete')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleStatusUpdate('cancelled')}>
-                                                    <XCircle className="mr-2 h-4 w-4 text-red-500" /> {t('transaction.cancelled')}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        {readOnly ? (
+                                            <div className={cn(
+                                                "px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all",
+                                                config.bg, config.color
+                                            )}>
+                                                <StatusIcon className="h-3.5 w-3.5" />
+                                                <span>{config.label}</span>
+                                            </div>
+                                        ) : (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button className={cn(
+                                                        "px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all",
+                                                        config.bg, config.color
+                                                    )}>
+                                                        <StatusIcon className="h-3.5 w-3.5" />
+                                                        <span>{config.label}</span>
+                                                    </button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start">
+                                                    <DropdownMenuLabel>{t('common.update')}</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={() => handleStatusUpdate('planned')}>
+                                                        <Clock className="mr-2 h-4 w-4 text-blue-500" /> {t('transaction.planned')}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
+                                                        <Clock className="mr-2 h-4 w-4 text-orange-500" /> {t('transaction.inProgress')}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleStatusUpdate('complete')}>
+                                                        <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> {t('transaction.complete')}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleStatusUpdate('cancelled')}>
+                                                        <XCircle className="mr-2 h-4 w-4 text-red-500" /> {t('transaction.cancelled')}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
 
                                         {transaction.isPrivate && isAdmin && (
                                             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500">
