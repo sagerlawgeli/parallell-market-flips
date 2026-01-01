@@ -37,7 +37,7 @@ export default function PublicTransactionPage() {
 
             const { data, error } = await supabase
                 .from('transactions')
-                .select('*')
+                .select('*, holders(name)')
                 .eq('seq_id', numericId)
                 .single()
 
@@ -88,6 +88,7 @@ export default function PublicTransactionPage() {
     const usdtAmount = transaction.usdt_amount || 0
     const fiatRate = transaction.fiat_buy_rate || 0
     const usdtRate = transaction.usdt_sell_rate || 0
+    const holderName = transaction.holders?.name
 
     const cost = fiatAmount * fiatRate
     const returns = usdtAmount * usdtRate
@@ -124,17 +125,22 @@ export default function PublicTransactionPage() {
                 <Card className="border-none shadow-xl bg-card overflow-hidden">
                     <CardHeader className="border-b border-muted/30 pb-6">
                         <div className="flex justify-between items-start">
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     {transaction.payment_method === 'bank' ? <Building2 className="h-5 w-5 text-primary" /> : <Banknote className="h-5 w-5 text-primary" />}
                                     {t(transaction.payment_method === 'bank' ? 'calculator.bank' : 'calculator.cash')}
                                     <span className="text-muted-foreground font-mono text-sm ml-2">({displayId})</span>
                                 </CardTitle>
-                                <div className={cn(
-                                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold",
-                                    getStatusColor(status)
-                                )}>
-                                    {t(`transaction.${status}`)}
+                                <div className="flex flex-wrap gap-2">
+                                    <div className={cn(
+                                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                                        getStatusColor(status)
+                                    )}>
+                                        {t(`transaction.${status}`)}
+                                    </div>
+                                    <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                                        {t('transaction.holder')}: {holderName || t('transaction.noHolder')}
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-right">
