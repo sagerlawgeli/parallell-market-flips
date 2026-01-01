@@ -1,8 +1,14 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { formatCurrency, cn } from "../lib/utils"
 import {
+    X,
+    Save,
+    Trash2,
+    TrendingUp,
+    CheckCircle2,
     Building2,
     Banknote,
+    Calendar,
     Lock
 } from "lucide-react"
 import { Button } from "./ui/button"
@@ -25,6 +31,7 @@ interface TransactionEditDrawerProps {
 export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }: TransactionEditDrawerProps) {
     const { t } = useTranslation()
     const { isAdmin } = useUserRole()
+    const dateInputRef = useRef<HTMLInputElement>(null)
     const [holders, setHolders] = useState<Array<{ id: string; name: string }>>([])
 
     // Helper to format date for input[type="date"]
@@ -196,12 +203,19 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 {/* Date */}
                 <div>
                     <label className="block text-sm font-medium mb-2">{t('common.date') || "Date"}</label>
-                    <Input
-                        type="date"
-                        value={editValues.createdAt}
-                        onChange={e => setEditValues({ ...editValues, createdAt: e.target.value })}
-                        className="h-12 text-base"
-                    />
+                    <div
+                        className="relative cursor-pointer"
+                        onClick={() => dateInputRef.current?.showPicker()}
+                    >
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Input
+                            ref={dateInputRef}
+                            type="date"
+                            value={editValues.createdAt}
+                            onChange={e => setEditValues({ ...editValues, createdAt: e.target.value })}
+                            className="h-12 text-base pl-10 cursor-pointer"
+                        />
+                    </div>
                 </div>
 
                 {/* Payment Method */}

@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
 import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
+import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
 
 export default function TransactionListPage() {
     const { t } = useTranslation()
@@ -14,10 +15,12 @@ export default function TransactionListPage() {
     const [loading, setLoading] = useState(true)
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
     const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
+    const [datePreset, setDatePreset] = useState<DateRangePreset>('all')
+    const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null })
 
     useEffect(() => {
         fetchTransactions()
-    }, [visibilityFilter, paymentMethodFilter])
+    }, [visibilityFilter, paymentMethodFilter, dateRange])
 
     const fetchTransactions = async () => {
         try {
@@ -43,6 +46,13 @@ export default function TransactionListPage() {
                 query = query.eq('payment_method', 'cash')
             } else if (paymentMethodFilter === 'bank') {
                 query = query.eq('payment_method', 'bank')
+            }
+
+            if (dateRange.start) {
+                query = query.gte('created_at', dateRange.start.toISOString())
+            }
+            if (dateRange.end) {
+                query = query.lte('created_at', dateRange.end.toISOString())
             }
 
             const { data, error } = await query
@@ -94,9 +104,18 @@ export default function TransactionListPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
-                <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                    <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
+                </div>
+                <DateRangeFilter
+                    value={datePreset}
+                    onChange={(preset, range) => {
+                        setDatePreset(preset)
+                        setDateRange(range)
+                    }}
+                />
             </div>
 
             {/* Transaction Count */}

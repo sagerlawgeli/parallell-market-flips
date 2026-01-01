@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { useTranslation } from "react-i18next"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
+import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
 
 export default function DashboardPage() {
     const { t } = useTranslation()
@@ -30,10 +31,15 @@ export default function DashboardPage() {
         daysRemaining: 0,
         dailyAverageNeeded: 0
     })
+    const [datePreset, setDatePreset] = useState<DateRangePreset>('this_month')
+    const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({
+        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // This month start
+        end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) // This month end
+    })
 
     useEffect(() => {
         fetchData()
-    }, [visibilityFilter])
+    }, [visibilityFilter, dateRange])
 
     const fetchData = async () => {
         try {
@@ -47,6 +53,13 @@ export default function DashboardPage() {
                 query = query.eq('is_private', true)
             } else if (visibilityFilter === 'public') {
                 query = query.eq('is_private', false)
+            }
+
+            if (dateRange.start) {
+                query = query.gte('created_at', dateRange.start.toISOString())
+            }
+            if (dateRange.end) {
+                query = query.lte('created_at', dateRange.end.toISOString())
             }
 
             const { data, error } = await query
@@ -79,26 +92,28 @@ export default function DashboardPage() {
             })
 
             const now = new Date()
-            const currentMonth = now.getMonth()
-            const currentYear = now.getFullYear()
+            const target = 18000 // This target is currently fixed, consider making it dynamic based on date range duration if needed.
 
-            const currentMonthTransactions = data.filter(t => {
-                const txDate = new Date(t.created_at)
-                return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear
-            })
+            const percentComplete = (totalProfit / target) * 100
 
-            const currentMonthProfit = currentMonthTransactions.reduce((sum, t) => sum + (t.profit || 0), 0)
-            const target = 18000
-            const percentComplete = (currentMonthProfit / target) * 100
+            let daysRemaining = 0
+            if (dateRange.end && dateRange.end > now) {
+                const diffTime = Math.abs(dateRange.end.getTime() - now.getTime())
+                daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            } else if (dateRange.end && dateRange.end <= now) {
+                daysRemaining = 0 // End date is in the past or today
+            } else {
+                // If no end date (e.g., 'all time'), or custom range without end,
+                // we might want to define a default behavior or show N/A.
+                // For now, let's assume 0 if no future end date.
+                daysRemaining = 0
+            }
 
-            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
-            const daysRemaining = lastDayOfMonth - now.getDate()
-
-            const remaining = Math.max(0, target - currentMonthProfit)
+            const remaining = Math.max(0, target - totalProfit)
             const dailyAverageNeeded = daysRemaining > 0 ? remaining / daysRemaining : 0
 
             setMonthlyProgress({
-                currentMonthProfit,
+                currentMonthProfit: totalProfit,
                 target,
                 percentComplete,
                 daysRemaining,
@@ -209,11 +224,20 @@ export default function DashboardPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
-                <div className="text-sm text-muted-foreground">
-                    {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                    <div className="text-sm text-muted-foreground">
+                        {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
+                    </div>
                 </div>
+                <DateRangeFilter
+                    value={datePreset}
+                    onChange={(preset, range) => {
+                        setDatePreset(preset)
+                        setDateRange(range)
+                    }}
+                />
             </div>
 
             {/* Key Metrics */}
@@ -250,7 +274,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
                                 <Target className="h-5 w-5 text-primary" />
-                                {t('analytics.monthlyTarget')}
+                                {datePreset === 'all' ? t('analytics.totalProgress') : t(`filter.${datePreset}`)} {t('analytics.target')}
                             </CardTitle>
                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs font-medium">
                                 <Calendar className="h-3.5 w-3.5" />

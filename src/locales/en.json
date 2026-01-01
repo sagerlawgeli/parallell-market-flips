@@ -15,7 +15,9 @@
         "edit": "Edit",
         "loading": "Loading...",
         "noData": "No data found",
-        "date": "Date"
+        "date": "Date",
+        "from": "From",
+        "to": "To"
     },
     "filter": {
         "visibility": "Visibility",
@@ -23,7 +25,15 @@
         "private": "Private Only",
         "public": "Public Only",
         "paymentMethod": "Payment Method",
-        "allPayments": "All Payments"
+        "allPayments": "All Payments",
+        "allTime": "All Time",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "thisWeek": "This Week",
+        "lastWeek": "Last Week",
+        "thisMonth": "This Month",
+        "lastMonth": "Last Month",
+        "custom": "Custom"
     },
     "ledger": {
         "title": "Ledger",
@@ -91,6 +101,7 @@
         "targetAchieved": "Target achieved! 🎉",
         "monthlyPerf": "Monthly Performance",
         "monthlyPerfDesc": "Profit by month vs 18,000 LYD target",
+        "totalProgress": "Total Progress",
         "target": "Target"
     },
     "transaction": {
