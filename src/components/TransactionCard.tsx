@@ -519,7 +519,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             </DropdownMenu>
                                         )}
 
-                                        {transaction.isPrivate && isAdmin && (
+                                        {transaction.isPrivate && isAdmin && !readOnly && (
                                             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500">
                                                 <Lock className="h-3 w-3" />
                                                 <span className="text-xs font-medium">{t('calculator.private')}</span>
