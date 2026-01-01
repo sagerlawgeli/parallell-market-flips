@@ -118,17 +118,21 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            const updates = {
+            const updates: any = {
                 fiat_amount: valFiatAmount,
                 fiat_buy_rate: valFiatRate,
                 usdt_amount: valUsdtAmount,
                 usdt_sell_rate: valUsdtRate,
                 payment_method: editValues.paymentMethod,
-                created_at: editValues.createdAt,
                 notes: editValues.notes,
                 is_private: editValues.isPrivate,
                 holder_id: editValues.holderId || null,
                 updated_at: new Date().toISOString()
+            }
+
+            // Only update created_at if the date actually changed to prevent stripping time precision
+            if (editValues.createdAt !== formatDateForInput(transaction.createdAt)) {
+                updates.created_at = editValues.createdAt
             }
 
             const { error: updateError } = await supabase
