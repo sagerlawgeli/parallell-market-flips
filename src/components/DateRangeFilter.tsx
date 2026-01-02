@@ -16,7 +16,7 @@ import {
     subMonths
 } from "date-fns"
 
-export type DateRangePreset = 'all' | 'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'custom'
+export type DateRangePreset = 'all' | 'today' | 'yesterday' | 'this_month' | 'last_month' | 'custom'
 
 interface DateRangeFilterProps {
     value: DateRangePreset
@@ -34,8 +34,6 @@ export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
         { value: 'all', label: t('filter.allTime') || 'All Time' },
         { value: 'today', label: t('filter.today') || 'Today' },
         { value: 'yesterday', label: t('filter.yesterday') || 'Yesterday' },
-        { value: 'this_week', label: t('filter.thisWeek') || 'This Week' },
-        { value: 'last_week', label: t('filter.lastWeek') || 'Last Week' },
         { value: 'this_month', label: t('filter.thisMonth') || 'This Month' },
         { value: 'last_month', label: t('filter.lastMonth') || 'Last Month' },
         { value: 'custom', label: t('filter.custom') || 'Custom' },
@@ -55,15 +53,6 @@ export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
                 const yesterday = subDays(now, 1)
                 start = startOfDay(yesterday)
                 end = endOfDay(yesterday)
-                break
-            case 'this_week':
-                start = startOfWeek(now, { weekStartsOn: 1 })
-                end = endOfWeek(now, { weekStartsOn: 1 })
-                break
-            case 'last_week':
-                const lastWeek = subWeeks(now, 1)
-                start = startOfWeek(lastWeek, { weekStartsOn: 1 })
-                end = endOfWeek(lastWeek, { weekStartsOn: 1 })
                 break
             case 'this_month':
                 start = startOfMonth(now)
