@@ -7,13 +7,16 @@ import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { useTranslation } from "react-i18next"
+import { startOfMonth, endOfMonth } from "date-fns"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
+import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
 import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
 
 export default function DashboardPage() {
     const { t } = useTranslation()
     const [loading, setLoading] = useState(true)
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
     const [metrics, setMetrics] = useState({
         totalProfit: 0,
         cashProfit: 0,
@@ -33,13 +36,13 @@ export default function DashboardPage() {
     })
     const [datePreset, setDatePreset] = useState<DateRangePreset>('this_month')
     const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({
-        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // This month start
-        end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) // This month end
+        start: startOfMonth(new Date()),
+        end: endOfMonth(new Date())
     })
 
     useEffect(() => {
         fetchData()
-    }, [visibilityFilter, dateRange])
+    }, [visibilityFilter, paymentMethodFilter, dateRange])
 
     const fetchData = async () => {
         try {
@@ -55,6 +58,12 @@ export default function DashboardPage() {
                 query = query.eq('is_private', false)
             }
 
+            if (paymentMethodFilter === 'cash') {
+                query = query.eq('payment_method', 'cash')
+            } else if (paymentMethodFilter === 'bank') {
+                query = query.eq('payment_method', 'bank')
+            }
+
             if (dateRange.start) {
                 query = query.gte('created_at', dateRange.start.toISOString())
             }
@@ -67,6 +76,22 @@ export default function DashboardPage() {
             if (error) throw error
 
             if (!data || data.length === 0) {
+                setMetrics({
+                    totalProfit: 0,
+                    cashProfit: 0,
+                    bankProfit: 0,
+                    totalVolume: 0,
+                    totalTransactions: 0,
+                    avgProfit: 0,
+                    avgMargin: 0
+                })
+                setChartData([])
+                setMonthlyProgress(prev => ({
+                    ...prev,
+                    currentMonthProfit: 0,
+                    percentComplete: 0,
+                    dailyAverageNeeded: prev.target / (prev.daysRemaining || 30) // Fallback
+                }))
                 setLoading(false)
                 return
             }
@@ -225,9 +250,12 @@ export default function DashboardPage() {
 
             {/* Filters */}
             <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                    <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
-                    <div className="text-sm text-muted-foreground">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                        <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                        <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
+                    </div>
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
                         {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
                     </div>
                 </div>

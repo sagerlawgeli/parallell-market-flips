@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { TransactionCard, type Transaction } from "../components/TransactionCard"
 import { supabase } from "../lib/supabase"
-import { format } from "date-fns"
+import { startOfMonth, endOfMonth, format } from "date-fns"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
@@ -15,8 +15,11 @@ export default function TransactionListPage() {
     const [loading, setLoading] = useState(true)
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
     const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
-    const [datePreset, setDatePreset] = useState<DateRangePreset>('all')
-    const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null })
+    const [datePreset, setDatePreset] = useState<DateRangePreset>('this_month')
+    const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({
+        start: startOfMonth(new Date()),
+        end: endOfMonth(new Date())
+    })
 
     useEffect(() => {
         fetchTransactions()
