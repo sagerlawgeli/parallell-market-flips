@@ -261,9 +261,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
     }
 
     const shareTransaction = async (type: 'text' | 'link') => {
-        const displayId = getDisplayId(transaction.seqId, transaction.paymentMethod)
         const baseUrl = window.location.origin
+        const displayId = getDisplayId(transaction.seqId, transaction.paymentMethod)
         const shareUrl = `${baseUrl}/t/${displayId}`
+        // Preview URL uses the Supabase Edge Function to serve meta tags
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '')
+        const previewUrl = `${supabaseUrl}/functions/v1/transaction-preview?id=${displayId}`
 
         if (type === 'link') {
             await navigator.clipboard.writeText(shareUrl)
@@ -285,14 +288,14 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
             `📈 *العائد:* ${formatCurrency(returns, 'LYD')}\n` +
             `💵 *الربح:* ${formatCurrency(transaction.profit, 'LYD')}\n` +
             `📅 *التاريخ:* ${date}\n\n` +
-            `🔗 *الرابط:* ${shareUrl}`
+            `🔗 *الرابط:* ${previewUrl}`
             : `📦 *Transaction Details - ${displayId}*\n\n` +
             `🕒 *Status:* ${t(`transaction.${transaction.status}`)}\n` +
             `💰 *Cost:* ${formatCurrency(cost, 'LYD')}\n` +
             `📈 *Return:* ${formatCurrency(returns, 'LYD')}\n` +
             `💵 *Profit:* ${formatCurrency(transaction.profit, 'LYD')}\n` +
             `📅 *Date:* ${date}\n\n` +
-            `🔗 *Link:* ${shareUrl}`
+            `🔗 *Link:* ${previewUrl}`
 
         await navigator.clipboard.writeText(message)
         toast.success(t('common.copiedToWhatsapp') || "Formatted for WhatsApp & copied!")
