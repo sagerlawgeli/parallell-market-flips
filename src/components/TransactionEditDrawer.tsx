@@ -99,13 +99,6 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         }
     }, [transaction])
 
-    // Update manual profit when calculations change, but only if not manually overridden or when first loading
-    useEffect(() => {
-        // We only want to auto-sync if the manual profit exactly matches the previous calculated profit
-        // or if we want it to always sync unless the user explicitly edits it.
-        // For simplicity, let's just provide a "Sync" button or allow manual override.
-    }, [calculatedProfit])
-
     if (!transaction) return null
 
     const hasChanges = () => {
