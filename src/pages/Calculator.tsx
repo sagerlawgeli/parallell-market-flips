@@ -193,6 +193,7 @@ export default function CalculatorPage() {
                 kraken_fee: parseFloat(krakenFee) || 0,
 
                 payment_method: paymentMethod,
+                profit: results.profit,
                 notes: notes || `Profit: ${results.profit.toFixed(2)} LYD`,
                 is_private: isPrivate
             })
