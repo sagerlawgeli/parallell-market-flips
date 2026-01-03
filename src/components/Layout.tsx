@@ -41,46 +41,90 @@ export default function Layout() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
-            {/* Header */}
-            <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
-                <div className="container flex h-16 md:h-14 items-center justify-between px-4 md:px-6">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center gap-2 font-bold text-xl md:text-lg"
-                    >
-                        <span className="text-primary">Arbitrage</span>
-                        <span className="text-foreground">Ledger</span>
-                    </motion.div>
-
-                    <div className="flex items-center gap-1">
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={toggleLanguage}
-                            className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-                            title={i18n.language === 'en' ? 'العربية' : 'English'}
-                        >
-                            <Languages className="h-5 w-5" />
-                        </motion.button>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleLogout}
-                            className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-                            title={t('common.logout')}
-                        >
-                            <LogOut className="h-5 w-5" />
-                        </motion.button>
+        <div className="min-h-screen bg-background text-foreground flex flex-col overflow-x-hidden">
+            <div className="flex-1 flex flex-row">
+                {/* Desktop Sidebar Navigation */}
+                <nav className="hidden md:block w-64 border-r bg-background/50 backdrop-blur-xl shrink-0 sticky top-0 h-screen overflow-y-auto">
+                    <div className="h-16 md:h-14 flex items-center px-6 border-b">
+                        <div className="flex items-center gap-2 font-bold text-lg">
+                            <span className="text-primary">Arbitrage</span>
+                            <span className="text-foreground">Ledger</span>
+                        </div>
                     </div>
-                </div>
-            </header>
+                    <div className="p-4 space-y-2">
+                        {navItems.map((item) => {
+                            const isActive = location.pathname === item.path
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    className="relative block"
+                                >
+                                    <motion.div
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                                            isActive
+                                                ? "text-primary bg-primary/10 font-semibold"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                        )}
+                                        whileHover={{ x: 4 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <item.icon className="h-5 w-5" />
+                                        <span>{item.label}</span>
+                                    </motion.div>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </nav>
 
-            {/* Main Content */}
-            <main className="flex-1 container px-4 md:px-6 py-6 pb-24 md:pb-6">
-                <Outlet />
-            </main>
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col min-w-0">
+                    {/* Header */}
+                    <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
+                        <div className="max-w-7xl mx-auto w-full flex h-16 md:h-14 items-center justify-between px-4 md:px-6">
+                            {/* Mobile Logo */}
+                            <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex items-center gap-2 font-bold text-xl md:hidden"
+                            >
+                                <span className="text-primary">Arbitrage</span>
+                                <span className="text-foreground">Ledger</span>
+                            </motion.div>
+
+                            <div className="hidden md:block flex-1" />
+
+                            <div className="flex items-center gap-1">
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={toggleLanguage}
+                                    className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                                    title={i18n.language === 'en' ? 'العربية' : 'English'}
+                                >
+                                    <Languages className="h-5 w-5" />
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handleLogout}
+                                    className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                                    title={t('common.logout')}
+                                >
+                                    <LogOut className="h-5 w-5" />
+                                </motion.button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 py-6 pb-24 md:pb-6">
+                        <Outlet />
+                    </main>
+                </div>
+            </div>
 
             {/* Bottom Navigation (Mobile) */}
             <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-xl z-20 pb-safe md:hidden">
@@ -131,45 +175,6 @@ export default function Layout() {
                     })}
                 </div>
             </nav>
-
-            {/* Desktop Sidebar Navigation */}
-            <nav className="hidden md:block fixed left-0 top-16 bottom-0 w-64 border-r bg-background/50 backdrop-blur-xl z-10">
-                <div className="p-4 space-y-2">
-                    {navItems.map((item) => {
-                        const isActive = location.pathname === item.path
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className="relative block"
-                            >
-                                <motion.div
-                                    className={cn(
-                                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                                        isActive
-                                            ? "text-primary bg-primary/10 font-semibold"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                    )}
-                                    whileHover={{ x: 4 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <item.icon className="h-5 w-5" />
-                                    <span>{item.label}</span>
-                                </motion.div>
-                            </Link>
-                        )
-                    })}
-                </div>
-            </nav>
-
-            {/* Desktop: Adjust main content to account for sidebar */}
-            <style>{`
-                @media (min-width: 768px) {
-                    main.container {
-                        margin-left: 16rem;
-                    }
-                }
-            `}</style>
         </div>
     )
 }

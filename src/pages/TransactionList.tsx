@@ -108,7 +108,7 @@ export default function TransactionListPage() {
 
             {/* Filters */}
             <div className="flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <div className="flex flex-wrap gap-4 items-center">
                     <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
                     <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
                 </div>
