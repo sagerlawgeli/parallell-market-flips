@@ -8,9 +8,11 @@ import { useTranslation } from "react-i18next"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
 import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
 import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
+import { useUserRole } from "../hooks/useUserRole"
 
 export default function TransactionListPage() {
     const { t } = useTranslation()
+    const { isAdmin } = useUserRole()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
@@ -38,6 +40,11 @@ export default function TransactionListPage() {
                     )
                 `)
                 .order('created_at', { ascending: false })
+
+            // Enforce privacy for non-admins
+            if (!isAdmin) {
+                query = query.eq('is_private', false)
+            }
 
             if (visibilityFilter === 'private') {
                 query = query.eq('is_private', true)

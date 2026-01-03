@@ -9,6 +9,7 @@ import { ChevronDown, Wallet, User, TrendingUp, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { TransactionEditDrawer } from "../components/TransactionEditDrawer"
 import type { Transaction } from "../components/TransactionCard"
+import { useUserRole } from "../hooks/useUserRole"
 
 interface HolderSummary {
     id: string
@@ -20,6 +21,7 @@ interface HolderSummary {
 
 export default function HoldersSummaryPage() {
     const { t } = useTranslation()
+    const { isAdmin } = useUserRole()
     const [holdersSummary, setHoldersSummary] = useState<HolderSummary[]>([])
     const [loading, setLoading] = useState(true)
     const [expandedHolderId, setExpandedHolderId] = useState<string | null>(null)
@@ -39,11 +41,18 @@ export default function HoldersSummaryPage() {
 
             if (holdersError) throw holdersError
 
-            const { data: transactions, error: txError } = await supabase
+            let txQuery = supabase
                 .from('transactions')
                 .select('*, seq_id')
                 .not('holder_id', 'is', null)
                 .order('created_at', { ascending: false })
+
+            // Enforce privacy for non-admins
+            if (!isAdmin) {
+                txQuery = txQuery.eq('is_private', false)
+            }
+
+            const { data: transactions, error: txError } = await txQuery
 
             if (txError) throw txError
 

@@ -11,9 +11,11 @@ import { startOfMonth, endOfMonth } from "date-fns"
 import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
 import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
 import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
+import { useUserRole } from "../hooks/useUserRole"
 
 export default function DashboardPage() {
     const { t } = useTranslation()
+    const { isAdmin } = useUserRole()
     const [loading, setLoading] = useState(true)
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
     const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
@@ -51,6 +53,11 @@ export default function DashboardPage() {
                 .select('*')
                 .eq('status', 'complete')
                 .order('created_at', { ascending: true })
+
+            // Enforce privacy for non-admins
+            if (!isAdmin) {
+                query = query.eq('is_private', false)
+            }
 
             if (visibilityFilter === 'private') {
                 query = query.eq('is_private', true)
