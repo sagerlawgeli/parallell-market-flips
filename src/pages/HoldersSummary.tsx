@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { formatCurrency, cn, getDisplayId } from "../lib/utils"
-import { ChevronDown, Wallet, User, TrendingUp } from "lucide-react"
+import { ChevronDown, Wallet, User, TrendingUp, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { TransactionEditDrawer } from "../components/TransactionEditDrawer"
 import type { Transaction } from "../components/TransactionCard"
@@ -82,7 +82,9 @@ export default function HoldersSummaryPage() {
                         stepFiatPaid: tx.step_fiat_paid,
                         holderId: tx.holder_id,
                         holderName: summary.name,
-                        seqId: tx.seq_id
+                        seqId: tx.seq_id,
+                        isHybrid: tx.is_hybrid,
+                        usdtSellRateBank: tx.usdt_sell_rate_bank
                     })
                 }
             })
@@ -243,9 +245,19 @@ export default function HoldersSummaryPage() {
                                                                         </div>
                                                                         <div className="font-semibold">{tx.type}</div>
                                                                         <div className="text-xs text-muted-foreground">{tx.createdAt}</div>
-                                                                        <div className="text-xs px-2 py-1 rounded-full bg-background text-muted-foreground uppercase font-medium">
+                                                                        <div className="text-xs px-2 py-1 rounded-full bg-background text-muted-foreground uppercase font-medium flex items-center gap-1.5">
                                                                             {tx.paymentMethod}
+                                                                            {tx.isHybrid && (
+                                                                                <>
+                                                                                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                                                                                    <span className="flex items-center gap-1 text-primary lowercase font-bold">
+                                                                                        <RefreshCw className="h-2.5 w-2.5" />
+                                                                                        {t('transaction.hybrid')}
+                                                                                    </span>
+                                                                                </>
+                                                                            )}
                                                                         </div>
+
                                                                     </div>
                                                                     <div className={cn(
                                                                         "font-bold",

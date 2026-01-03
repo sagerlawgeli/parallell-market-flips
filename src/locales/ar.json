@@ -83,7 +83,14 @@
         "margin": "هامش",
         "save": "حفظ المعاملة",
         "notes": "ملاحظات",
-        "notesPlaceholder": "أضف ملاحظات..."
+        "notesPlaceholder": "أضف ملاحظات...",
+        "hybrid": "Hybrid",
+        "hybridFull": "Hybrid معاملة",
+        "hybridDesc": "تغطية التكلفة نقداً، وبيع الفائض عبر البنك",
+        "bankProfitRate": "سعر ربح البنك",
+        "usdtToCover": "USDT لتغطية التكلفة",
+        "usdtSurplus": "USDT للربح (الفائض)",
+        "surplusToBank": "الفائض للبنك"
     },
     "analytics": {
         "title": "التحليلات",
@@ -128,7 +135,10 @@
         "noHolder": "لم يتم تعيين أمين",
         "holderRequired": "يرجى تعيين أمين قبل وضع علامة كمدفوع",
         "holderRequiredNote": "الأمين مطلوب عند تحديد 'تم الدفع'",
-        "editTitle": "تعديل المعاملة"
+        "editTitle": "تعديل المعاملة",
+        "hybrid": "Hybrid",
+        "bankProfitPath": "مسار ربح البنك",
+        "bankRealized": "متحقق في البنك"
     },
     "holders": {
         "title": "إدارة الأمناء",

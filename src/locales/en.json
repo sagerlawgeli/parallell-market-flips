@@ -79,6 +79,13 @@
         "saving": "Saving...",
         "notes": "Notes",
         "notesPlaceholder": "Add notes...",
+        "hybrid": "Hybrid",
+        "hybridFull": "Hybrid Transaction",
+        "hybridDesc": "Cover cost in cash, sell surplus via bank",
+        "bankProfitRate": "Bank Profit Rate",
+        "usdtToCover": "USDT to cover cost",
+        "usdtSurplus": "USDT for profit (Surplus)",
+        "surplusToBank": "Surplus to Bank",
         "input": "Input",
         "converted": "Converted",
         "resulting": "Resulting",
@@ -128,7 +135,10 @@
         "noHolder": "No holder assigned",
         "holderRequired": "Please assign a holder before marking as paid",
         "holderRequiredNote": "Holder is required when 'Fiat Paid' is checked",
-        "editTitle": "Edit Transaction"
+        "editTitle": "Edit Transaction",
+        "hybrid": "Hybrid",
+        "bankProfitPath": "Bank Profit Path",
+        "bankRealized": "Realized in Bank"
     },
     "holders": {
         "title": "Manage Holders",

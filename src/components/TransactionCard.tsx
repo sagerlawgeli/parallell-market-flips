@@ -18,7 +18,8 @@ import {
     ArrowDownRight,
     ArrowUpRight,
     Share2,
-    MessageSquare
+    MessageSquare,
+    RefreshCw
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -62,6 +63,8 @@ export interface Transaction {
     holderId?: string
     holderName?: string
     seqId?: number
+    isHybrid?: boolean
+    usdtSellRateBank?: number
 }
 
 interface TransactionCardProps {
@@ -412,11 +415,43 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                     <ArrowRight className="h-5 w-5 text-muted-foreground/30 mx-2" />
 
                                     <div className="flex-1 text-right">
-                                        <div className="text-xs text-muted-foreground mb-1">{t('calculator.sell')}</div>
+                                        <div className="text-xs text-muted-foreground mb-1">
+                                            {transaction.isHybrid ? `${t('calculator.sell')} (${t('calculator.cash')})` : t('calculator.sell')}
+                                        </div>
                                         <div className="font-semibold text-md">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
                                         <div className="text-xs text-muted-foreground">@ {transaction.usdtRate} LYD</div>
                                     </div>
                                 </div>
+
+                                {transaction.isHybrid && (
+                                    <div className="mb-4 bg-primary/5 border border-primary/10 rounded-2xl p-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="text-[10px] uppercase tracking-wider font-bold text-primary/70 mb-1">{t('transaction.bankProfitPath')}</div>
+                                                <div className="text-sm font-medium">{t('calculator.hybridDesc')}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-md font-bold text-primary">@ {transaction.usdtSellRateBank} LYD</div>
+                                                <div className="text-[10px] text-muted-foreground">{t('transaction.bankRealized')}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2 border-t border-primary/10 flex justify-between text-[10px] text-muted-foreground gap-2">
+                                            <div className="flex flex-col">
+                                                <span>{t('calculator.usdtToCover')}</span>
+                                                <span className="font-mono font-bold text-foreground">
+                                                    {((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate).toFixed(2)} USDT
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col text-right">
+                                                <span>{t('calculator.usdtSurplus')}</span>
+                                                <span className="font-mono font-bold text-primary">
+                                                    {(transaction.usdtAmount - ((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate)).toFixed(2)} USDT
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Progress */}
                                 <div className="mb-4">
@@ -526,6 +561,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500">
                                                 <Lock className="h-3 w-3" />
                                                 <span className="text-xs font-medium">{t('calculator.private')}</span>
+                                            </div>
+                                        )}
+                                        {transaction.isHybrid && (
+                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                                <RefreshCw className="h-3 w-3" />
+                                                <span className="text-xs font-bold uppercase tracking-tighter">{t('transaction.hybrid')}</span>
                                             </div>
                                         )}
                                     </div>

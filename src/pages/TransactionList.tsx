@@ -80,7 +80,9 @@ export default function TransactionListPage() {
                 isPrivate: txn.is_private ?? true,
                 holderId: txn.holder_id,
                 holderName: txn.holders?.name,
-                seqId: txn.seq_id
+                seqId: txn.seq_id,
+                isHybrid: txn.is_hybrid,
+                usdtSellRateBank: txn.usdt_sell_rate_bank
             }))
 
             setTransactions(formattedTransactions)

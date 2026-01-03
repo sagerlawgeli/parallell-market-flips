@@ -31,6 +31,8 @@ export default function CalculatorPage() {
 
     // New Fields
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "bank">("cash")
+    const [isHybrid, setIsHybrid] = useState(false)
+    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>("")
     const [notes, setNotes] = useState<string>("")
     const [isPrivate, setIsPrivate] = useState<boolean>(true)
 
@@ -51,7 +53,7 @@ export default function CalculatorPage() {
 
     useEffect(() => {
         calculate()
-    }, [amount, fiatBuyRate, usdtSellRate, forexRate, cryptoRate, targetMode, currency, revolutFee, krakenFee])
+    }, [amount, fiatBuyRate, usdtSellRate, usdtSellRateBank, isHybrid, forexRate, cryptoRate, targetMode, currency, revolutFee, krakenFee, paymentMethod])
 
     const handleFetchRates = async () => {
         setLoadingRates(true)
@@ -151,8 +153,19 @@ export default function CalculatorPage() {
 
         const cost = calcFiatAmount * valFiatBuyRate
         const revenue = calcUsdtAmount * valUsdtSellRate
-        const profit = revenue - cost
-        const profitMargin = cost > 0 ? (profit / cost) * 100 : 0
+
+        let profit = revenue - cost
+        let profitMargin = cost > 0 ? (profit / cost) * 100 : 0
+
+        if (isHybrid && paymentMethod === 'cash') {
+            const valUsdtSellRateBank = parseFloat(usdtSellRateBank) || valUsdtSellRate
+            // USDT needed to cover cost at cash rate
+            const usdtToCoverCost = valUsdtSellRate > 0 ? cost / valUsdtSellRate : 0
+            const surplusUsdt = Math.max(0, calcUsdtAmount - usdtToCoverCost)
+            // Profit is exclusively realized at the bank rate on the surplus
+            profit = surplusUsdt * valUsdtSellRateBank
+            profitMargin = cost > 0 ? (profit / cost) * 100 : 0
+        }
 
         setResults({
             cost,
@@ -193,6 +206,8 @@ export default function CalculatorPage() {
                 kraken_fee: parseFloat(krakenFee) || 0,
 
                 payment_method: paymentMethod,
+                is_hybrid: isHybrid && paymentMethod === 'cash',
+                usdt_sell_rate_bank: (isHybrid && paymentMethod === 'cash') ? (parseFloat(usdtSellRateBank) || 0) : null,
                 profit: results.profit,
                 notes: notes || `Profit: ${results.profit.toFixed(2)} LYD`,
                 is_private: isPrivate
@@ -292,7 +307,7 @@ export default function CalculatorPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">
-                                    {t('calculator.sell')} ({t('calculator.rate')} LYD / USDT)
+                                    {paymentMethod === 'cash' && isHybrid ? `${t('calculator.sell')} (Cash Rate)` : t('calculator.sell') + ` (${t('calculator.rate')} LYD / USDT)`}
                                 </label>
                                 <Input
                                     type="number"
@@ -303,6 +318,66 @@ export default function CalculatorPage() {
                                 />
                             </div>
                         </div>
+
+                        {paymentMethod === 'cash' && (
+                            <div className="pt-2">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="space-y-0.5">
+                                        <label className="text-sm font-medium">{t('calculator.hybridFull')}</label>
+                                        <p className="text-xs text-muted-foreground">{t('calculator.hybridDesc')}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsHybrid(!isHybrid)}
+                                        className={cn(
+                                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                            isHybrid ? "bg-primary" : "bg-muted"
+                                        )}
+                                    >
+                                        <span
+                                            className={cn(
+                                                "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                                isHybrid ? "translate-x-6" : "translate-x-1"
+                                            )}
+                                        />
+                                    </button>
+                                </div>
+                                {isHybrid && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        className="space-y-3"
+                                    >
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                {t('calculator.bankProfitRate')} (LYD / USDT)
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                placeholder="6.50"
+                                                value={usdtSellRateBank}
+                                                onChange={(e) => setUsdtSellRateBank(e.target.value)}
+                                                className="h-11 rounded-xl border-primary/20 bg-primary/5"
+                                            />
+                                        </div>
+
+                                        <div className="bg-muted/30 rounded-xl p-3 space-y-2 border border-border/50">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">{t('calculator.usdtToCover')}:</span>
+                                                <span className="font-mono font-bold">{(results.cost / (parseFloat(usdtSellRate) || 1)).toFixed(2)} USDT</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">{t('calculator.usdtSurplus')}:</span>
+                                                <span className="font-mono font-bold text-primary">{Math.max(0, results.usdtAmount - (results.cost / (parseFloat(usdtSellRate) || 1))).toFixed(2)} USDT</span>
+                                            </div>
+                                            <div className="pt-1 mt-1 border-t border-border/50 flex justify-between text-[10px] uppercase tracking-wider font-bold">
+                                                <span className="text-muted-foreground">{t('calculator.surplusToBank')}:</span>
+                                                <span className="text-primary">{formatCurrency(results.profit, 'LYD')}</span>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">

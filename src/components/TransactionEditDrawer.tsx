@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { motion } from "framer-motion"
 import { formatCurrency, cn } from "../lib/utils"
 import {
     Building2,
@@ -55,7 +56,9 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         createdAt: "",
         notes: "",
         isPrivate: true,
-        holderId: ""
+        holderId: "",
+        isHybrid: false,
+        usdtSellRateBank: ""
     })
     const [manualProfit, setManualProfit] = useState<string>("")
 
@@ -64,7 +67,16 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
     const valFiatRate = parseFloat(editValues.fiatRate) || 0
     const valUsdtAmount = parseFloat(editValues.usdtAmount) || 0
     const valUsdtRate = parseFloat(editValues.usdtRate) || 0
-    const calculatedProfit = (valUsdtAmount * valUsdtRate) - (valFiatAmount * valFiatRate)
+
+    let calculatedProfit = (valUsdtAmount * valUsdtRate) - (valFiatAmount * valFiatRate)
+
+    if (editValues.isHybrid && editValues.paymentMethod === 'cash') {
+        const valUsdtSellRateBank = parseFloat(editValues.usdtSellRateBank) || valUsdtRate
+        const cost = valFiatAmount * valFiatRate
+        const usdtToCoverCost = valUsdtRate > 0 ? cost / valUsdtRate : 0
+        const surplusUsdt = Math.max(0, valUsdtAmount - usdtToCoverCost)
+        calculatedProfit = surplusUsdt * valUsdtSellRateBank
+    }
 
     // Fetch holders
     useEffect(() => {
@@ -93,7 +105,9 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 createdAt: formatDateForInput(transaction.createdAt),
                 notes: transaction.notes || "",
                 isPrivate: transaction.isPrivate,
-                holderId: transaction.holderId || ""
+                holderId: transaction.holderId || "",
+                isHybrid: transaction.isHybrid || false,
+                usdtSellRateBank: transaction.usdtSellRateBank?.toString() ?? ""
             })
             setManualProfit(transaction.profit?.toString() ?? "")
         }
@@ -112,6 +126,8 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             editValues.notes !== (transaction.notes || "") ||
             editValues.isPrivate !== transaction.isPrivate ||
             editValues.holderId !== (transaction.holderId || "") ||
+            editValues.isHybrid !== (transaction.isHybrid || false) ||
+            (parseFloat(editValues.usdtSellRateBank) || 0) !== (transaction.usdtSellRateBank || 0) ||
             parseFloat(manualProfit) !== transaction.profit
         )
     }
@@ -182,6 +198,8 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 notes: editValues.notes,
                 is_private: editValues.isPrivate,
                 holder_id: editValues.holderId || null,
+                is_hybrid: editValues.isHybrid && editValues.paymentMethod === 'cash',
+                usdt_sell_rate_bank: (editValues.isHybrid && editValues.paymentMethod === 'cash') ? (parseFloat(editValues.usdtSellRateBank) || 0) : null,
                 updated_at: new Date().toISOString()
             }
 
@@ -216,7 +234,9 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     paymentMethod: editValues.paymentMethod,
                     createdAt: editValues.createdAt,
                     notes: editValues.notes,
-                    isPrivate: editValues.isPrivate
+                    isPrivate: editValues.isPrivate,
+                    isHybrid: editValues.isHybrid,
+                    usdtSellRateBank: parseFloat(editValues.usdtSellRateBank) || 0
                 }
             }
 
@@ -342,6 +362,63 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                         />
                     </div>
                 </div>
+
+                {/* Hybrid Toggle */}
+                {editValues.paymentMethod === 'cash' && (
+                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="space-y-0.5">
+                                <h3 className="font-semibold text-sm">{t('calculator.hybridFull')}</h3>
+                                <p className="text-[10px] text-muted-foreground italic">{t('calculator.hybridDesc')}</p>
+                            </div>
+                            <button
+                                onClick={() => setEditValues({ ...editValues, isHybrid: !editValues.isHybrid })}
+                                className={cn(
+                                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                    editValues.isHybrid ? "bg-primary" : "bg-muted"
+                                )}
+                            >
+                                <span
+                                    className={cn(
+                                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                        editValues.isHybrid ? "translate-x-6" : "translate-x-1"
+                                    )}
+                                />
+                            </button>
+                        </div>
+                        {editValues.isHybrid && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="space-y-3 pt-2 mt-2 border-t border-primary/10"
+                            >
+                                <div>
+                                    <label className="block text-xs text-muted-foreground mb-1">{t('calculator.bankProfitRate')} (LYD / USDT)</label>
+                                    <Input
+                                        type="number"
+                                        value={editValues.usdtSellRateBank}
+                                        onChange={e => setEditValues({ ...editValues, usdtSellRateBank: e.target.value })}
+                                        className="h-12 text-base border-primary/20 bg-background"
+                                    />
+                                </div>
+                                <div className="space-y-1.5 pt-1">
+                                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                                        <span>{t('calculator.usdtToCover')}:</span>
+                                        <span className="font-mono font-bold">
+                                            {((parseFloat(editValues.fiatAmount) * (parseFloat(editValues.fiatRate) || 0)) / (parseFloat(editValues.usdtRate) || 1)).toFixed(2)} USDT
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-[10px]">
+                                        <span className="text-muted-foreground">{t('calculator.usdtSurplus')}:</span>
+                                        <span className="text-primary font-bold">
+                                            {Math.max(0, parseFloat(editValues.usdtAmount) - ((parseFloat(editValues.fiatAmount) * (parseFloat(editValues.fiatRate) || 0)) / (parseFloat(editValues.usdtRate) || 1))).toFixed(2)} USDT
+                                        </span>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
+                )}
 
                 {/* Holder */}
                 <div>

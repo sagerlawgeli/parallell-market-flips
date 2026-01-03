@@ -97,8 +97,8 @@ export default function DashboardPage() {
             }
 
             const totalProfit = data.reduce((sum, t) => sum + (t.profit || 0), 0)
-            const cashProfit = data.filter(t => t.payment_method === 'cash').reduce((sum, t) => sum + (t.profit || 0), 0)
-            const bankProfit = data.filter(t => t.payment_method === 'bank').reduce((sum, t) => sum + (t.profit || 0), 0)
+            const cashProfit = data.filter(t => t.payment_method === 'cash' && !t.is_hybrid).reduce((sum, t) => sum + (t.profit || 0), 0)
+            const bankProfit = data.filter(t => t.payment_method === 'bank' || (t.payment_method === 'cash' && t.is_hybrid)).reduce((sum, t) => sum + (t.profit || 0), 0)
             const totalVolume = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
             const totalTransactions = data.length
             const avgProfit = totalTransactions > 0 ? totalProfit / totalTransactions : 0
