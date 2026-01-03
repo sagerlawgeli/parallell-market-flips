@@ -85,17 +85,17 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
     useEffect(() => {
         if (transaction) {
             setEditValues({
-                fiatAmount: transaction.fiatAmount.toString(),
-                fiatRate: transaction.fiatRate.toString(),
-                usdtAmount: transaction.usdtAmount.toString(),
-                usdtRate: transaction.usdtRate.toString(),
+                fiatAmount: transaction.fiatAmount?.toString() ?? "",
+                fiatRate: transaction.fiatRate?.toString() ?? "",
+                usdtAmount: transaction.usdtAmount?.toString() ?? "",
+                usdtRate: transaction.usdtRate?.toString() ?? "",
                 paymentMethod: transaction.paymentMethod,
                 createdAt: formatDateForInput(transaction.createdAt),
                 notes: transaction.notes || "",
                 isPrivate: transaction.isPrivate,
                 holderId: transaction.holderId || ""
             })
-            setManualProfit(transaction.profit.toString())
+            setManualProfit(transaction.profit?.toString() ?? "")
         }
     }, [transaction])
 
@@ -118,7 +118,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
 
     const getDisplayId = (paymentMethod: 'cash' | 'bank', seqId: number) => {
         const prefix = paymentMethod === 'cash' ? 'C' : 'B'
-        return `${prefix}${seqId.toString().padStart(5, '0')}`
+        return `${prefix}${seqId?.toString().padStart(5, '0') ?? '00000'}`
     }
 
     const shareTransaction = async (type: 'text' | 'link') => {

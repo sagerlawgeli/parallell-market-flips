@@ -1,42 +1,8 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { useUserContext } from '../components/UserContext'
 
-export type UserRole = 'admin' | 'standard'
+export type { UserRole } from '../components/UserContext'
 
 export function useUserRole() {
-    const [role, setRole] = useState<UserRole>('standard')
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchRole = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) {
-                    setLoading(false)
-                    return
-                }
-
-                const { data, error } = await supabase
-                    .from('user_roles')
-                    .select('role')
-                    .eq('user_id', user.id)
-                    .single()
-
-                if (error || !data) {
-                    // Default to standard if no role found
-                    setRole('standard')
-                } else {
-                    setRole(data.role as UserRole)
-                }
-            } catch (error) {
-                console.error('Error fetching user role:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchRole()
-    }, [])
-
-    return { role, isAdmin: role === 'admin', loading }
+    const { role, isAdmin, loading } = useUserContext()
+    return { role, isAdmin, loading }
 }

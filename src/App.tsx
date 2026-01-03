@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { Toaster } from "sonner"
-import { useEffect, useState } from "react"
-import { supabase } from "./lib/supabase"
+import { useEffect } from "react"
 import Layout from "./components/Layout"
 import CalculatorPage from "./pages/Calculator"
 import TransactionListPage from "./pages/TransactionList"
@@ -12,26 +11,11 @@ import HoldersSummaryPage from "./pages/HoldersSummary"
 import PublicTransactionPage from "./pages/PublicTransactionPage"
 import "./i18n"
 import { useTranslation } from "react-i18next"
+import { UserProvider, useUserContext } from "./components/UserContext"
 
-function App() {
-  const [session, setSession] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+function AppContent() {
+  const { user, loading } = useUserContext()
   const { i18n } = useTranslation()
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
 
   // Update document direction based on language
   useEffect(() => {
@@ -47,10 +31,10 @@ function App() {
     <BrowserRouter>
       <Toaster position="top-center" richColors />
       <Routes>
-        <Route path="/login" element={!session ? <AuthPage /> : <Navigate to="/" />} />
+        <Route path="/login" element={!user ? <AuthPage /> : <Navigate to="/" />} />
         <Route path="/t/:seqId" element={<PublicTransactionPage />} />
 
-        <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
+        <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />}>
           <Route index element={<TransactionListPage />} />
           <Route path="calculator" element={<CalculatorPage />} />
           <Route path="analytics" element={<DashboardPage />} />
@@ -59,6 +43,14 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+  )
+}
+
+function App() {
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
   )
 }
 
