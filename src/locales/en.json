@@ -4,7 +4,7 @@
         "calculator": "Calculator",
         "analytics": "Analytics",
         "holders": "Holders",
-        "holdersSummary": "Cash Summary"
+        "holdersSummary": "Cash"
     },
     "common": {
         "logout": "Logout",
@@ -38,7 +38,10 @@
         "lastWeek": "Last Week",
         "thisMonth": "This Month",
         "lastMonth": "Last Month",
-        "custom": "Custom"
+        "custom": "Custom",
+        "status": "Status",
+        "active": "Active",
+        "done": "Done"
     },
     "ledger": {
         "title": "Ledger",
@@ -167,6 +170,7 @@
         "transactions": "Transactions",
         "transactionCount": "{{count}} transactions",
         "noData": "No holder data available",
-        "fetchError": "Failed to load holders summary"
+        "fetchError": "Failed to load holders summary",
+        "pendingNotice": "Transaction not finalized, but cash being held"
     }
 }

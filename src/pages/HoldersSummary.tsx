@@ -27,6 +27,7 @@ export default function HoldersSummaryPage() {
     const [expandedHolderId, setExpandedHolderId] = useState<string | null>(null)
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
     const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
+    const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([])
 
     useEffect(() => {
         fetchHoldersSummary()
@@ -101,7 +102,33 @@ export default function HoldersSummaryPage() {
             const summaryArray = Array.from(summaryMap.values())
                 .sort((a, b) => b.totalProfit - a.totalProfit)
 
+            const pending = transactions
+                .filter((tx: any) => tx.status !== 'complete')
+                .map((tx: any) => ({
+                    id: tx.id,
+                    type: tx.type,
+                    status: tx.status,
+                    paymentMethod: tx.payment_method,
+                    fiatAmount: tx.fiat_amount,
+                    fiatRate: tx.fiat_buy_rate,
+                    usdtAmount: tx.usdt_amount,
+                    usdtRate: tx.usdt_sell_rate,
+                    profit: tx.profit || 0,
+                    createdAt: format(new Date(tx.created_at), 'MMM d, yyyy'),
+                    notes: tx.notes,
+                    isPrivate: tx.is_private,
+                    stepFiatAcquired: tx.step_fiat_acquired,
+                    stepUsdtSold: tx.step_usdt_sold,
+                    stepFiatPaid: tx.step_fiat_paid,
+                    holderId: tx.holder_id,
+                    holderName: summaryMap.get(tx.holder_id)?.name || '',
+                    seqId: tx.seq_id,
+                    isHybrid: tx.is_hybrid,
+                    usdtSellRateBank: tx.usdt_sell_rate_bank
+                }))
+
             setHoldersSummary(summaryArray)
+            setPendingTransactions(pending)
         } catch (error) {
             console.error('Error fetching holders summary:', error)
             toast.error(t('holdersSummary.fetchError'))
@@ -134,26 +161,63 @@ export default function HoldersSummaryPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
             >
-                <Card className="border-0 shadow-sm overflow-hidden">
+                <Card className="border-0 shadow-sm overflow-hidden bg-background/50 backdrop-blur-sm">
                     <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <div className="p-4 rounded-2xl bg-primary/10">
                                     <Wallet className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground mb-1">{t('holdersSummary.totalCash')}</p>
-                                    <p className="text-xl font-bold">{formatCurrency(totalAllHolders, 'LYD')}</p>
+                                    <p className="text-2xl font-bold tracking-tight">{formatCurrency(totalAllHolders, 'LYD')}</p>
                                 </div>
                             </div>
-                            <div className="text-right">
+                            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-4 sm:pt-0 border-border/50">
                                 <p className="text-sm text-muted-foreground mb-1">{t('holdersSummary.totalHolders')}</p>
                                 <p className="text-xl font-semibold">{holdersSummary.length}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Pending Cash Alerts */}
+                <AnimatePresence>
+                    {pendingTransactions.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-2"
+                        >
+                            {pendingTransactions.map((tx) => (
+                                <div
+                                    key={tx.id}
+                                    className="flex items-center gap-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 group cursor-pointer hover:bg-amber-500/15 transition-all"
+                                    onClick={() => {
+                                        setSelectedTransaction(tx)
+                                        setIsEditDrawerOpen(true)
+                                    }}
+                                >
+                                    <div className="p-2 rounded-xl bg-amber-500/20 animate-pulse">
+                                        <RefreshCw className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-0.5">
+                                            {t('holdersSummary.pendingNotice')}
+                                        </p>
+                                        <p className="text-sm font-semibold truncate">
+                                            {formatCurrency(tx.profit, 'LYD')} — {getDisplayId(tx.seqId, tx.paymentMethod)} ({tx.holderName})
+                                        </p>
+                                    </div>
+                                    <ChevronDown className="h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity rotate-[-90deg]" />
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
 
             {loading ? (
@@ -248,28 +312,29 @@ export default function HoldersSummaryPage() {
                                                                         setIsEditDrawerOpen(true)
                                                                     }}
                                                                 >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="font-mono bg-background px-1.5 py-0.5 rounded text-[10px] font-bold text-muted-foreground tracking-wider uppercase">
-                                                                            {getDisplayId(tx.seqId, tx.paymentMethod)}
+                                                                    <div className="flex flex-col gap-2 min-w-0 flex-1 mr-3">
+                                                                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                                                            <div className="font-mono bg-background px-1.5 py-0.5 rounded text-[10px] font-bold text-muted-foreground tracking-wider uppercase shrink-0">
+                                                                                {getDisplayId(tx.seqId, tx.paymentMethod)}
+                                                                            </div>
+                                                                            <div className="font-bold text-sm truncate">{tx.type}</div>
+                                                                            <div className="text-[10px] text-muted-foreground whitespace-nowrap opacity-60 font-medium">{tx.createdAt}</div>
                                                                         </div>
-                                                                        <div className="font-semibold">{tx.type}</div>
-                                                                        <div className="text-xs text-muted-foreground">{tx.createdAt}</div>
-                                                                        <div className="text-xs px-2 py-1 rounded-full bg-background text-muted-foreground uppercase font-medium flex items-center gap-1.5">
-                                                                            {tx.paymentMethod}
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <div className="text-[9px] px-1.5 py-0.5 rounded-md bg-background text-muted-foreground uppercase font-black tracking-tighter border border-border/50">
+                                                                                {tx.paymentMethod}
+                                                                            </div>
                                                                             {tx.isHybrid && (
-                                                                                <>
-                                                                                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                                                                                    <span className="flex items-center gap-1 text-primary lowercase font-bold">
-                                                                                        <RefreshCw className="h-2.5 w-2.5" />
-                                                                                        {t('transaction.hybrid')}
-                                                                                    </span>
-                                                                                </>
+                                                                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
+                                                                                    <RefreshCw className="h-2 w-2" />
+                                                                                    {t('transaction.hybrid')}
+                                                                                </span>
                                                                             )}
                                                                         </div>
-
                                                                     </div>
+
                                                                     <div className={cn(
-                                                                        "font-bold",
+                                                                        "font-black text-sm sm:text-base whitespace-nowrap shrink-0",
                                                                         tx.profit >= 0 ? 'text-green-500' : 'text-red-500'
                                                                     )}>
                                                                         {tx.profit > 0 ? '+' : ''}{formatCurrency(tx.profit, 'LYD')}

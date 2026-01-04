@@ -46,10 +46,14 @@ function AppContent() {
   )
 }
 
+import { FilterProvider } from "./contexts/FilterContext"
+
 function App() {
   return (
     <UserProvider>
-      <AppContent />
+      <FilterProvider>
+        <AppContent />
+      </FilterProvider>
     </UserProvider>
   )
 }

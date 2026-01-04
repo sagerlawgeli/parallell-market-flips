@@ -4,7 +4,7 @@
         "calculator": "الحاسبة",
         "analytics": "التحليلات",
         "holders": "الأمناء",
-        "holdersSummary": "ملخص النقد"
+        "holdersSummary": "النقد"
     },
     "common": {
         "logout": "خروج",
@@ -38,7 +38,10 @@
         "lastWeek": "الأسبوع الماضي",
         "thisMonth": "هذا الشهر",
         "lastMonth": "الشهر الماضي",
-        "custom": "تخصيص"
+        "custom": "تخصيص",
+        "status": "الحالة",
+        "active": "نشطة",
+        "done": "مكتملة"
     },
     "ledger": {
         "title": "السجل",
@@ -167,6 +170,7 @@
         "transactions": "المعاملات",
         "transactionCount": "{{count}} معاملة",
         "noData": "لا توجد بيانات أمناء",
-        "fetchError": "فشل في تحميل ملخص الأمناء"
+        "fetchError": "فشل في تحميل ملخص الأمناء",
+        "pendingNotice": "المعاملة لم تكتمل، ولكن تم الاحتفاظ بالنقد"
     }
 }

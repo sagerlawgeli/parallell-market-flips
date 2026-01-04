@@ -1,9 +1,16 @@
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar } from "lucide-react"
-import { cn } from "../lib/utils"
 import { useTranslation } from "react-i18next"
+import { cn } from "../lib/utils"
 import { Input } from "./ui/input"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from "./ui/dropdown-menu"
+import { ChevronDown, Calendar, History, ListFilter, Sun, CalendarRange, Clock } from "lucide-react"
 import {
     startOfDay,
     endOfDay,
@@ -27,13 +34,13 @@ export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
     const startInputRef = useRef<HTMLInputElement>(null)
     const endInputRef = useRef<HTMLInputElement>(null)
 
-    const presets: Array<{ value: DateRangePreset; label: string }> = [
-        { value: 'all', label: t('filter.allTime') || 'All Time' },
-        { value: 'today', label: t('filter.today') || 'Today' },
-        { value: 'yesterday', label: t('filter.yesterday') || 'Yesterday' },
-        { value: 'this_month', label: t('filter.thisMonth') || 'This Month' },
-        { value: 'last_month', label: t('filter.lastMonth') || 'Last Month' },
-        { value: 'custom', label: t('filter.custom') || 'Custom' },
+    const presets: Array<{ value: DateRangePreset; label: string; icon: any }> = [
+        { value: 'all', label: t('filter.allTime') || 'All Time', icon: ListFilter },
+        { value: 'today', label: t('filter.today') || 'Today', icon: Sun },
+        { value: 'yesterday', label: t('filter.yesterday') || 'Yesterday', icon: Clock },
+        { value: 'this_month', label: t('filter.thisMonth') || 'This Month', icon: Calendar },
+        { value: 'last_month', label: t('filter.lastMonth') || 'Last Month', icon: History },
+        { value: 'custom', label: t('filter.custom') || 'Custom', icon: CalendarRange },
     ]
 
     const handlePresetChange = (preset: DateRangePreset) => {
@@ -84,40 +91,40 @@ export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
         }
     }
 
+    const currentPreset = presets.find(p => p.value === value) || presets[0]
+    const Icon = currentPreset.icon
+
     return (
         <div className="flex flex-col gap-2 w-full">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-2xl min-w-max">
-                    {presets.map((preset) => {
-                        const isActive = value === preset.value
-                        return (
-                            <motion.button
-                                key={preset.value}
-                                onClick={() => handlePresetChange(preset.value)}
-                                className={cn(
-                                    "relative px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap",
-                                    isActive
-                                        ? "text-primary-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="dateRangeFilter"
-                                        className="absolute inset-0 bg-primary rounded-xl"
-                                        transition={{
-                                            type: "spring",
-                                            stiffness: 500,
-                                            damping: 30
-                                        }}
-                                    />
-                                )}
-                                <span className="relative z-10">{preset.label}</span>
-                            </motion.button>
-                        )
-                    })}
-                </div>
+            <div className="flex items-center overflow-x-auto pb-1 scrollbar-none">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            className={cn(
+                                "flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-border/50 bg-muted/30 text-[10px] sm:text-xs font-bold uppercase tracking-tighter hover:bg-muted/50 transition-all whitespace-nowrap",
+                                value !== 'all' ? "text-primary border-primary/30 bg-primary/5" : "text-foreground"
+                            )}
+                        >
+                            <Icon className="h-4 w-4" />
+                            <span>{currentPreset.label}</span>
+                            <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48 rounded-xl p-1">
+                        <DropdownMenuRadioGroup value={value} onValueChange={(v) => handlePresetChange(v as DateRangePreset)}>
+                            {presets.map((preset) => (
+                                <DropdownMenuRadioItem
+                                    key={preset.value}
+                                    value={preset.value}
+                                    className="flex items-center gap-2 rounded-lg py-2 px-3 text-sm cursor-pointer"
+                                >
+                                    <preset.icon className="h-4 w-4 opacity-70" />
+                                    <span className="font-medium">{preset.label}</span>
+                                </DropdownMenuRadioItem>
+                            ))}
+                        </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <AnimatePresence>

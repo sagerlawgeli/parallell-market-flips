@@ -330,7 +330,7 @@ export default function CalculatorPage() {
                                         onClick={() => setIsHybrid(!isHybrid)}
                                         className={cn(
                                             "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                                            isHybrid ? "bg-primary" : "bg-muted"
+                                            isHybrid ? "bg-purple-500" : "bg-muted"
                                         )}
                                     >
                                         <span

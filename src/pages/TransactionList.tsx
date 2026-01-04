@@ -2,30 +2,34 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { TransactionCard, type Transaction } from "../components/TransactionCard"
 import { supabase } from "../lib/supabase"
-import { startOfMonth, endOfMonth, format } from "date-fns"
+import { format } from "date-fns"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
-import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
-import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
-import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
+import { VisibilityFilter } from "../components/VisibilityFilter"
+import { PaymentMethodFilter } from "../components/PaymentMethodFilter"
+import { DateRangeFilter } from "../components/DateRangeFilter"
+import { StatusFilter } from "../components/StatusFilter"
 import { useUserRole } from "../hooks/useUserRole"
+import { useFilters } from "../contexts/FilterContext"
 
 export default function TransactionListPage() {
     const { t } = useTranslation()
-    const { isAdmin } = useUserRole()
+    const { isAdmin, loading: roleLoading } = useUserRole()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [loading, setLoading] = useState(true)
-    const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
-    const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
-    const [datePreset, setDatePreset] = useState<DateRangePreset>('this_month')
-    const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({
-        start: startOfMonth(new Date()),
-        end: endOfMonth(new Date())
-    })
+
+    const {
+        visibilityFilter, setVisibilityFilter,
+        paymentMethodFilter, setPaymentMethodFilter,
+        statusFilter, setStatusFilter,
+        datePreset, dateRange, setDateFilter
+    } = useFilters()
 
     useEffect(() => {
-        fetchTransactions()
-    }, [visibilityFilter, paymentMethodFilter, dateRange])
+        if (!roleLoading) {
+            fetchTransactions()
+        }
+    }, [visibilityFilter, paymentMethodFilter, statusFilter, dateRange, isAdmin, roleLoading])
 
     const fetchTransactions = async () => {
         try {
@@ -53,9 +57,17 @@ export default function TransactionListPage() {
             }
 
             if (paymentMethodFilter === 'cash') {
-                query = query.eq('payment_method', 'cash')
+                query = query.eq('payment_method', 'cash').eq('is_hybrid', false)
             } else if (paymentMethodFilter === 'bank') {
-                query = query.eq('payment_method', 'bank')
+                query = query.eq('payment_method', 'bank').eq('is_hybrid', false)
+            } else if (paymentMethodFilter === 'hybrid') {
+                query = query.eq('is_hybrid', true)
+            }
+
+            if (statusFilter === 'active') {
+                query = query.in('status', ['planned', 'in_progress'])
+            } else if (statusFilter === 'done') {
+                query = query.eq('status', 'complete')
             }
 
             if (dateRange.start) {
@@ -116,16 +128,14 @@ export default function TransactionListPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap gap-4 items-center">
-                    <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
-                    <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
-                </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
+                <StatusFilter value={statusFilter} onChange={setStatusFilter} />
                 <DateRangeFilter
                     value={datePreset}
                     onChange={(preset, range) => {
-                        setDatePreset(preset)
-                        setDateRange(range)
+                        setDateFilter(preset, range)
                     }}
                 />
             </div>

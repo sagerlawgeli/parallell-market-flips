@@ -375,7 +375,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                                 onClick={() => setEditValues({ ...editValues, isHybrid: !editValues.isHybrid })}
                                 className={cn(
                                     "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                                    editValues.isHybrid ? "bg-primary" : "bg-muted"
+                                    editValues.isHybrid ? "bg-purple-500" : "bg-muted"
                                 )}
                             >
                                 <span

@@ -59,6 +59,8 @@ export default function PublicTransactionPage() {
                     stepUsdtSold: data.step_usdt_sold || false,
                     stepFiatPaid: data.step_fiat_paid || false,
                     isPrivate: data.is_private ?? false,
+                    isHybrid: data.is_hybrid ?? false,
+                    usdtSellRateBank: data.usdt_sell_rate_bank,
                     holderId: data.holder_id,
                     holderName: data.holders?.name,
                     seqId: data.seq_id

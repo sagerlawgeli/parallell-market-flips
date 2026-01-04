@@ -6,24 +6,23 @@ import {
     DropdownMenuRadioItem,
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { ChevronDown, Banknote, Building2, Filter, RefreshCw } from "lucide-react"
+import { ChevronDown, Clock, CheckCircle2, ListFilter } from "lucide-react"
 import { cn } from "../lib/utils"
 
-export type PaymentMethodFilterValue = 'all' | 'cash' | 'bank' | 'hybrid'
+export type StatusFilterValue = 'all' | 'active' | 'done'
 
-interface PaymentMethodFilterProps {
-    value: PaymentMethodFilterValue
-    onChange: (value: PaymentMethodFilterValue) => void
+interface StatusFilterProps {
+    value: StatusFilterValue
+    onChange: (value: StatusFilterValue) => void
 }
 
-export function PaymentMethodFilter({ value, onChange }: PaymentMethodFilterProps) {
+export function StatusFilter({ value, onChange }: StatusFilterProps) {
     const { t } = useTranslation()
 
     const options = [
-        { value: 'all' as const, label: t('filter.paymentMethod'), icon: Filter },
-        { value: 'cash' as const, label: t('calculator.cash'), icon: Banknote },
-        { value: 'bank' as const, label: t('calculator.bank'), icon: Building2 },
-        { value: 'hybrid' as const, label: t('calculator.hybrid'), icon: RefreshCw },
+        { value: 'all' as const, label: t('filter.status'), icon: ListFilter },
+        { value: 'active' as const, label: t('filter.active'), icon: Clock },
+        { value: 'done' as const, label: t('filter.done'), icon: CheckCircle2 },
     ]
 
     const currentOption = options.find(o => o.value === value) || options[0]
@@ -34,9 +33,8 @@ export function PaymentMethodFilter({ value, onChange }: PaymentMethodFilterProp
             <DropdownMenuTrigger asChild>
                 <button
                     className={cn(
-                        "flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-border/50 bg-muted/30 text-[10px] sm:text-xs font-bold uppercase tracking-tighter hover:bg-muted/50 transition-all whitespace-nowrap", value !== 'all'
-                        ? "text-primary border-primary/30 bg-primary/5"
-                        : "text-foreground"
+                        "flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-border/50 bg-muted/30 text-[10px] sm:text-xs font-bold uppercase tracking-tighter hover:bg-muted/50 transition-all whitespace-nowrap",
+                        value !== 'all' ? "text-primary border-primary/30 bg-primary/5" : "text-foreground"
                     )}
                 >
                     <Icon className="h-4 w-4" />
@@ -45,7 +43,7 @@ export function PaymentMethodFilter({ value, onChange }: PaymentMethodFilterProp
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 rounded-xl p-1">
-                <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v as PaymentMethodFilterValue)}>
+                <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v as StatusFilterValue)}>
                     {options.map((option) => (
                         <DropdownMenuRadioItem
                             key={option.value}

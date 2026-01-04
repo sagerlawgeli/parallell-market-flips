@@ -7,18 +7,27 @@ import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { useTranslation } from "react-i18next"
-import { startOfMonth, endOfMonth } from "date-fns"
-import { VisibilityFilter, type VisibilityFilterValue } from "../components/VisibilityFilter"
-import { PaymentMethodFilter, type PaymentMethodFilterValue } from "../components/PaymentMethodFilter"
-import { DateRangeFilter, type DateRangePreset } from "../components/DateRangeFilter"
+
+import { VisibilityFilter } from "../components/VisibilityFilter"
+import { PaymentMethodFilter } from "../components/PaymentMethodFilter"
+import { DateRangeFilter } from "../components/DateRangeFilter"
+import { StatusFilter } from "../components/StatusFilter"
 import { useUserRole } from "../hooks/useUserRole"
+import { useFilters } from "../contexts/FilterContext"
 
 export default function DashboardPage() {
     const { t } = useTranslation()
-    const { isAdmin } = useUserRole()
+    const { isAdmin, loading: roleLoading } = useUserRole()
     const [loading, setLoading] = useState(true)
-    const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilterValue>('all')
-    const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethodFilterValue>('all')
+
+    const {
+        visibilityFilter, setVisibilityFilter,
+        paymentMethodFilter, setPaymentMethodFilter,
+        dashboardStatusFilter: statusFilter,
+        setDashboardStatusFilter: setStatusFilter,
+        datePreset, dateRange, setDateFilter
+    } = useFilters()
+
     const [metrics, setMetrics] = useState({
         totalProfit: 0,
         cashProfit: 0,
@@ -36,23 +45,26 @@ export default function DashboardPage() {
         daysRemaining: 0,
         dailyAverageNeeded: 0
     })
-    const [datePreset, setDatePreset] = useState<DateRangePreset>('this_month')
-    const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({
-        start: startOfMonth(new Date()),
-        end: endOfMonth(new Date())
-    })
 
     useEffect(() => {
-        fetchData()
-    }, [visibilityFilter, paymentMethodFilter, dateRange])
+        if (!roleLoading) {
+            fetchData()
+        }
+    }, [visibilityFilter, paymentMethodFilter, statusFilter, dateRange, isAdmin, roleLoading])
 
     const fetchData = async () => {
         try {
             let query = supabase
                 .from('transactions')
                 .select('*')
-                .eq('status', 'complete')
-                .order('created_at', { ascending: true })
+
+            if (statusFilter === 'active') {
+                query = query.in('status', ['planned', 'in_progress'])
+            } else if (statusFilter === 'done') {
+                query = query.eq('status', 'complete')
+            }
+
+            query = query.order('created_at', { ascending: true })
 
             // Enforce privacy for non-admins
             if (!isAdmin) {
@@ -66,9 +78,11 @@ export default function DashboardPage() {
             }
 
             if (paymentMethodFilter === 'cash') {
-                query = query.eq('payment_method', 'cash')
+                query = query.eq('payment_method', 'cash').eq('is_hybrid', false)
             } else if (paymentMethodFilter === 'bank') {
-                query = query.eq('payment_method', 'bank')
+                query = query.eq('payment_method', 'bank').eq('is_hybrid', false)
+            } else if (paymentMethodFilter === 'hybrid') {
+                query = query.eq('is_hybrid', true)
             }
 
             if (dateRange.start) {
@@ -124,7 +138,27 @@ export default function DashboardPage() {
             })
 
             const now = new Date()
-            const target = 18000 // This target is currently fixed, consider making it dynamic based on date range duration if needed.
+            const MONTHLY_TARGET = 18000
+            const DAILY_TARGET = MONTHLY_TARGET / 30
+
+            let target = MONTHLY_TARGET
+            let durationInDays = 30
+
+            if (dateRange.start && dateRange.end) {
+                const diffTime = Math.abs(dateRange.end.getTime() - dateRange.start.getTime())
+                durationInDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                // Ensure at least 1 day for daily filters like 'today'
+                if (durationInDays <= 1) durationInDays = 1
+                target = durationInDays * DAILY_TARGET
+            } else {
+                // All time - calculate months since first transaction or use data range
+                if (data.length > 0) {
+                    const firstTxn = new Date(data[0].created_at)
+                    const diffTime = Math.abs(now.getTime() - firstTxn.getTime())
+                    const diffMonths = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30)))
+                    target = diffMonths * MONTHLY_TARGET
+                }
+            }
 
             const percentComplete = (totalProfit / target) * 100
 
@@ -132,13 +166,6 @@ export default function DashboardPage() {
             if (dateRange.end && dateRange.end > now) {
                 const diffTime = Math.abs(dateRange.end.getTime() - now.getTime())
                 daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-            } else if (dateRange.end && dateRange.end <= now) {
-                daysRemaining = 0 // End date is in the past or today
-            } else {
-                // If no end date (e.g., 'all time'), or custom range without end,
-                // we might want to define a default behavior or show N/A.
-                // For now, let's assume 0 if no future end date.
-                daysRemaining = 0
             }
 
             const remaining = Math.max(0, target - totalProfit)
@@ -256,21 +283,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                        <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
-                        <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
-                    </div>
-                    <div className="text-sm text-muted-foreground whitespace-nowrap">
-                        {t(metrics.totalTransactions === 1 ? 'ledger.transactionCountSingular' : 'ledger.transactionCount', { count: metrics.totalTransactions })}
-                    </div>
-                </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                <VisibilityFilter value={visibilityFilter} onChange={setVisibilityFilter} />
+                <PaymentMethodFilter value={paymentMethodFilter} onChange={setPaymentMethodFilter} />
+                <StatusFilter value={statusFilter} onChange={setStatusFilter} />
                 <DateRangeFilter
                     value={datePreset}
                     onChange={(preset, range) => {
-                        setDatePreset(preset)
-                        setDateRange(range)
+                        setDateFilter(preset, range)
                     }}
                 />
             </div>
@@ -309,7 +329,12 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
                                 <Target className="h-5 w-5 text-primary" />
-                                {datePreset === 'all' ? t('analytics.totalProgress') : t(`filter.${datePreset}`)} {t('analytics.target')}
+                                {(() => {
+                                    if (datePreset === 'all') return t('analytics.totalProgress')
+                                    if (datePreset === 'this_month') return t('filter.thisMonth')
+                                    if (datePreset === 'last_month') return t('filter.lastMonth')
+                                    return t(`filter.${datePreset}`)
+                                })()} {t('analytics.target')}
                             </CardTitle>
                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs font-medium">
                                 <Calendar className="h-3.5 w-3.5" />

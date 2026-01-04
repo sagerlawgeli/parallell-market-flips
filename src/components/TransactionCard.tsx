@@ -318,12 +318,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                             {/* Status Strip */}
                             <div className={cn("absolute top-0 bottom-0 start-0 w-1", config.stripColor)} />
 
-                            <div className="p-4 md:p-5 ps-5 md:ps-6">
+                            <div className="p-3.5 md:p-5 ps-4 md:ps-6">
                                 {/* Header */}
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-bold text-lg">{transaction.type}</span>
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            <span className="font-bold text-base md:text-lg">{transaction.type}</span>
                                             <div className={cn("w-2 h-2 rounded-full", config.dotColor)} />
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -332,12 +332,22 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             </span>
                                             <span>{transaction.createdAt}</span>
                                             <span>•</span>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 shrink-0">
                                                 {transaction.paymentMethod === 'cash' ?
-                                                    <Banknote className="h-3 w-3" /> :
-                                                    <Building2 className="h-3 w-3" />
+                                                    <Banknote className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> :
+                                                    <Building2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                                 }
-                                                {transaction.paymentMethod === 'cash' ? t('calculator.cash') : t('calculator.bank')}
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="whitespace-nowrap">
+                                                        {transaction.paymentMethod === 'cash' ? t('calculator.cash') : t('calculator.bank')}
+                                                    </span>
+                                                    {transaction.isHybrid && (
+                                                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
+                                                            <RefreshCw className="h-2 w-2" />
+                                                            {t('transaction.hybrid')}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -405,11 +415,11 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                 </div>
 
                                 {/* Amounts */}
-                                <div className="flex items-center justify-between mb-4 bg-muted/30 rounded-2xl p-4">
+                                <div className="flex items-center justify-between mb-4 bg-muted/30 rounded-2xl p-3 md:p-4">
                                     <div className="flex-1">
                                         <div className="text-xs text-muted-foreground mb-1">{t('calculator.buy')}</div>
-                                        <div className="font-semibold text-md">{formatCurrency(transaction.fiatAmount, transaction.type)}</div>
-                                        <div className="text-xs text-muted-foreground">@ {transaction.fiatRate} LYD</div>
+                                        <div className="font-bold text-sm md:text-md truncate">{formatCurrency(transaction.fiatAmount, transaction.type)}</div>
+                                        <div className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">@ {transaction.fiatRate} LYD</div>
                                     </div>
 
                                     <ArrowRight className="h-5 w-5 text-muted-foreground/30 mx-2" />
@@ -418,13 +428,13 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                         <div className="text-xs text-muted-foreground mb-1">
                                             {transaction.isHybrid ? `${t('calculator.sell')} (${t('calculator.cash')})` : t('calculator.sell')}
                                         </div>
-                                        <div className="font-semibold text-md">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
-                                        <div className="text-xs text-muted-foreground">@ {transaction.usdtRate} LYD</div>
+                                        <div className="font-bold text-sm md:text-md truncate">{formatCurrency(transaction.usdtAmount, 'USD')}T</div>
+                                        <div className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">@ {transaction.usdtRate} LYD</div>
                                     </div>
                                 </div>
 
                                 {transaction.isHybrid && (
-                                    <div className="mb-4 bg-primary/5 border border-primary/10 rounded-2xl p-4 space-y-3">
+                                    <div className="mb-4 bg-primary/5 border border-primary/10 rounded-2xl p-3 md:p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="text-[10px] uppercase tracking-wider font-bold text-primary/70 mb-1">{t('transaction.bankProfitPath')}</div>
@@ -440,13 +450,13 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             <div className="flex flex-col">
                                                 <span>{t('calculator.usdtToCover')}</span>
                                                 <span className="font-mono font-bold text-foreground">
-                                                    {((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate).toFixed(2)} USDT
+                                                    {((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate).toFixed(1)} USDT
                                                 </span>
                                             </div>
                                             <div className="flex flex-col text-right">
                                                 <span>{t('calculator.usdtSurplus')}</span>
                                                 <span className="font-mono font-bold text-primary">
-                                                    {(transaction.usdtAmount - ((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate)).toFixed(2)} USDT
+                                                    {(transaction.usdtAmount - ((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate)).toFixed(1)} USDT
                                                 </span>
                                             </div>
                                         </div>
@@ -455,7 +465,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
 
                                 {/* Progress */}
                                 <div className="mb-4">
-                                    <div className="flex gap-2 mt-3">
+                                    <div className="flex gap-1.5 mt-3">
                                         {[
                                             { key: 'stepFiatAcquired', label: t('transaction.fiatAcquired'), checked: transaction.stepFiatAcquired },
                                             { key: 'stepUsdtSold', label: t('transaction.usdtSold'), checked: transaction.stepUsdtSold },
@@ -465,10 +475,10 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                                 key={key}
                                                 onClick={() => !readOnly && handleStepToggle(key as any)}
                                                 className={cn(
-                                                    "flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all",
+                                                    "flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all uppercase tracking-tight",
                                                     checked
-                                                        ? "bg-green-500/10 text-green-500"
-                                                        : "bg-muted text-muted-foreground hover:bg-muted/80",
+                                                        ? "bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+                                                        : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent",
                                                     readOnly && "cursor-default pointer-events-none"
                                                 )}
                                             >
@@ -564,7 +574,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             </div>
                                         )}
                                         {transaction.isHybrid && (
-                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
                                                 <RefreshCw className="h-3 w-3" />
                                                 <span className="text-xs font-bold uppercase tracking-tighter">{t('transaction.hybrid')}</span>
                                             </div>

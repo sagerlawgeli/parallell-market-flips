@@ -1,8 +1,14 @@
-import { motion } from "framer-motion"
-import { Lock, Unlock, Eye } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from "./ui/dropdown-menu"
+import { ChevronDown, Lock, Unlock, Eye } from "lucide-react"
 import { cn } from "../lib/utils"
 import { useUserRole } from "../hooks/useUserRole"
-import { useTranslation } from "react-i18next"
 
 export type VisibilityFilterValue = 'all' | 'private' | 'public'
 
@@ -19,50 +25,42 @@ export function VisibilityFilter({ value, onChange }: VisibilityFilterProps) {
     if (!isAdmin) return null
 
     const options = [
-        { value: 'all' as const, label: t('filter.all'), icon: Eye },
+        { value: 'all' as const, label: t('filter.visibility'), icon: Eye },
         { value: 'private' as const, label: t('filter.private'), icon: Lock },
         { value: 'public' as const, label: t('filter.public'), icon: Unlock },
     ]
 
-    return (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <span className="text-xs sm:text-sm text-muted-foreground font-medium">
-                {t('filter.visibility')}:
-            </span>
-            <div className="inline-flex gap-2 p-1 bg-muted/30 rounded-2xl">
-                {options.map((option) => {
-                    const isActive = value === option.value
-                    const Icon = option.icon
+    const currentOption = options.find(o => o.value === value) || options[0]
+    const Icon = currentOption.icon
 
-                    return (
-                        <motion.button
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    className={cn(
+                        "flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-border/50 bg-muted/30 text-[10px] sm:text-xs font-bold uppercase tracking-tighter hover:bg-muted/50 transition-all whitespace-nowrap",
+                        value !== 'all' ? "text-primary border-primary/30 bg-primary/5" : "text-foreground"
+                    )}
+                >
+                    <Icon className="h-4 w-4" />
+                    <span>{currentOption.label}</span>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 rounded-xl p-1">
+                <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v as VisibilityFilterValue)}>
+                    {options.map((option) => (
+                        <DropdownMenuRadioItem
                             key={option.value}
-                            onClick={() => onChange(option.value)}
-                            className={cn(
-                                "relative px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5",
-                                isActive
-                                    ? "text-primary-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                            whileTap={{ scale: 0.95 }}
+                            value={option.value}
+                            className="flex items-center gap-2 rounded-lg py-2 px-3 text-sm cursor-pointer"
                         >
-                            {isActive && (
-                                <motion.div
-                                    layoutId="visibilityFilter"
-                                    className="absolute inset-0 bg-primary rounded-xl shadow-sm"
-                                    transition={{
-                                        type: "spring",
-                                        stiffness: 500,
-                                        damping: 30
-                                    }}
-                                />
-                            )}
-                            <Icon className="h-4 w-4 relative z-10" />
-                            <span className="relative z-10">{option.label}</span>
-                        </motion.button>
-                    )
-                })}
-            </div>
-        </div>
+                            <option.icon className="h-4 w-4 opacity-70" />
+                            <span className="font-medium">{option.label}</span>
+                        </DropdownMenuRadioItem>
+                    ))}
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
     )
 }
