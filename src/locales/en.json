@@ -140,7 +140,7 @@
         "holderRequiredNote": "Holder is required when 'Fiat Paid' is checked",
         "editTitle": "Edit Transaction",
         "hybrid": "Hybrid",
-        "bankProfitPath": "Bank Profit Path",
+        "bankProfitPath": "Bank Profit Rate @",
         "bankRealized": "Realized in Bank"
     },
     "holders": {

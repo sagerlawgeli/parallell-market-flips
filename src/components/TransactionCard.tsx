@@ -312,7 +312,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <Card className="overflow-hidden transition-all hover:shadow-lg active:scale-[0.98] border-0 shadow-sm">
+                <Card className="overflow-hidden transition-all hover:shadow-xl active:scale-[0.98] border border-white/5 shadow-md bg-card/50 backdrop-blur-sm">
                     <CardContent className="p-0">
                         <div className="relative border-t-[4px]">
                             {/* Status Strip */}
@@ -437,12 +437,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                     <div className="mb-4 bg-primary/5 border border-primary/10 rounded-2xl p-3 md:p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <div className="text-[10px] uppercase tracking-wider font-bold text-primary/70 mb-1">{t('transaction.bankProfitPath')}</div>
-                                                <div className="text-sm font-medium">{t('calculator.hybridDesc')}</div>
+                                                <div className="text-[8px] uppercase tracking-wider font-bold text-primary/70 mb-1">{t('transaction.bankProfitPath')}</div>
+                                                <div className="text-xs font-medium">{t('calculator.hybridDesc')}</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-md font-bold text-primary">@ {transaction.usdtSellRateBank} LYD</div>
-                                                <div className="text-[10px] text-muted-foreground">{t('transaction.bankRealized')}</div>
+                                                <div className="text-xs font-bold text-primary">{transaction.usdtSellRateBank} LYD</div>
+                                                <div className="text-[8px] text-muted-foreground">{t('transaction.bankRealized')}</div>
                                             </div>
                                         </div>
 

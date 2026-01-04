@@ -140,7 +140,7 @@
         "holderRequiredNote": "الأمين مطلوب عند تحديد 'تم الدفع'",
         "editTitle": "تعديل المعاملة",
         "hybrid": "Hybrid",
-        "bankProfitPath": "مسار ربح البنك",
+        "bankProfitPath": "سعر بيع الربح المصرفي @",
         "bankRealized": "متحقق في البنك"
     },
     "holders": {

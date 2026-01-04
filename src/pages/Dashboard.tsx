@@ -304,7 +304,7 @@ export default function DashboardPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                     >
-                        <Card className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                        <Card className="overflow-hidden border border-white/5 shadow-md hover:shadow-xl transition-all bg-card/50 backdrop-blur-sm">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                                 <stat.icon className={cn("h-4 w-4", stat.iconColor)} />
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
             >
-                <Card className="border-0 shadow-sm overflow-hidden">
+                <Card className="border border-white/5 shadow-md overflow-hidden bg-card/50 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
@@ -409,7 +409,7 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
             >
-                <Card className="border-0 shadow-sm">
+                <Card className="border border-white/5 shadow-md bg-card/50 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle>{t('analytics.monthlyPerf')}</CardTitle>
                         <p className="text-xs text-muted-foreground">{t('analytics.monthlyPerfDesc')}</p>

@@ -249,7 +249,7 @@ export default function HoldersSummaryPage() {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ delay: index * 0.05 }}
                             >
-                                <Card className="border-0 shadow-sm hover:shadow-md transition-all overflow-hidden">
+                                <Card className="border border-white/5 shadow-md hover:shadow-lg transition-all overflow-hidden bg-card/50 backdrop-blur-sm">
                                     <CardHeader
                                         className="cursor-pointer hover:bg-muted/30 transition-colors"
                                         onClick={() => toggleExpand(holder.id)}
