@@ -295,6 +295,17 @@ export default function DashboardPage() {
                 />
             </div>
 
+            {/* Transaction Count */}
+            {!loading && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm text-muted-foreground"
+                >
+                    {t('ledger.transactionCount', { count: metrics.totalTransactions })}
+                </motion.div>
+            )}
+
             {/* Key Metrics */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 {statCards.map((stat, index) => (
@@ -342,41 +353,60 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-baseline">
-                                <span className="text-3xl font-bold">
-                                    {formatCurrency(monthlyProgress.currentMonthProfit, 'LYD')}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                    / {formatCurrency(monthlyProgress.target, 'LYD')}
-                                </span>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div className="flex flex-col gap-1">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-xl font-black tracking-tight text-foreground">
+                                        {formatCurrency(monthlyProgress.currentMonthProfit, 'LYD')}
+                                    </span>
+                                    <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground/60 mb-1">
+                                        / {formatCurrency(monthlyProgress.target, 'LYD')} {t('analytics.target')}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="relative h-3 bg-muted/50 rounded-full overflow-hidden">
+
+                            <div className="relative h-4 bg-muted/20 rounded-full overflow-hidden border border-white/5 shadow-inner">
                                 <motion.div
                                     initial={{ width: 0 }}
-                                    animate={{ width: `${Math.min(monthlyProgress.percentComplete, 100)}%` }}
-                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    animate={{
+                                        width: `${Math.min(monthlyProgress.percentComplete, 100)}%`,
+                                    }}
+                                    transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
                                     className={cn(
-                                        "h-full rounded-full",
-                                        monthlyProgress.percentComplete >= 100 ? 'bg-green-500' :
-                                            monthlyProgress.percentComplete >= 50 ? 'bg-yellow-500' :
-                                                'bg-red-500'
+                                        "h-full rounded-full relative",
+                                        monthlyProgress.percentComplete >= 100
+                                            ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_20px_rgba(34,197,94,0.4)]' :
+                                            monthlyProgress.percentComplete >= 50
+                                                ? 'bg-gradient-to-r from-yellow-500 to-amber-400 shadow-[0_0_20px_rgba(234,179,8,0.3)]' :
+                                                'bg-gradient-to-r from-red-500 to-orange-400 shadow-[0_0_20px_rgba(239,68,68,0.3)]'
                                     )}
-                                />
+                                >
+                                    {/* Subtle Pulse Overly */}
+                                    <motion.div
+                                        animate={{ opacity: [0.3, 0.6, 0.3] }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                        className="absolute inset-0 bg-white/20"
+                                    />
+                                </motion.div>
                             </div>
-                            <div className="flex justify-between text-xs">
-                                <span className={cn(
-                                    "font-semibold",
-                                    monthlyProgress.percentComplete >= 100 ? 'text-green-500' :
-                                        monthlyProgress.percentComplete >= 50 ? 'text-yellow-500' :
-                                            'text-red-500'
+
+                            <div className="flex justify-between items-center text-[9px] sm:text-xs">
+                                <div className={cn(
+                                    "flex items-center gap-1.5 px-2 py-1 rounded-lg font-bold uppercase tracking-wider",
+                                    monthlyProgress.percentComplete >= 100 ? 'bg-green-500/10 text-green-500' :
+                                        monthlyProgress.percentComplete >= 50 ? 'bg-yellow-500/10 text-yellow-500' :
+                                            'bg-red-500/10 text-red-500'
                                 )}>
+                                    <TrendingUp className="h-3 w-3" />
                                     {monthlyProgress.percentComplete.toFixed(1)}% {t('analytics.complete')}
-                                </span>
-                                <span className="text-muted-foreground">
-                                    {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')} {t('analytics.remaining')}
-                                </span>
+                                </div>
+                                <div className="text-muted-foreground flex items-center gap-1">
+                                    <span className="font-medium text-foreground">
+                                        {formatCurrency(Math.max(0, monthlyProgress.target - monthlyProgress.currentMonthProfit), 'LYD')}
+                                    </span>
+                                    <span className="opacity-60">{t('analytics.remaining')}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -416,41 +446,62 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="h-[300px] md:h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.3} />
+                            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0.2} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid vertical={false} stroke="#ffffff" opacity={0.05} />
                                 <XAxis
                                     dataKey="month"
                                     stroke="#888"
-                                    fontSize={12}
+                                    fontSize={10}
                                     tickLine={false}
                                     axisLine={false}
+                                    tick={{ fill: '#888' }}
+                                    dy={10}
                                 />
                                 <YAxis
                                     stroke="#888"
-                                    fontSize={12}
+                                    fontSize={10}
                                     tickLine={false}
                                     axisLine={false}
+                                    tick={{ fill: '#888' }}
+                                    tickFormatter={(val) => `${val / 1000}k`}
                                 />
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#1f2937',
-                                        border: 'none',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                                        backdropFilter: 'blur(8px)'
                                     }}
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)', radius: 8 }}
+                                    itemStyle={{ color: '#22c55e', fontWeight: 'bold' }}
+                                    cursor={{ fill: 'rgba(255,255,255,0.05)', radius: 10 }}
                                 />
                                 <ReferenceLine
                                     y={18000}
-                                    stroke="#888"
-                                    strokeDasharray="3 3"
-                                    label={{ value: 'Target', position: 'right', fill: '#888', fontSize: 12 }}
+                                    stroke="#ffffff"
+                                    strokeDasharray="4 4"
+                                    strokeOpacity={0.2}
+                                    label={{
+                                        value: t('analytics.target'),
+                                        position: 'insideBottomRight',
+                                        fill: '#fff',
+                                        fontSize: 9,
+                                        opacity: 0.5,
+                                        offset: 10
+                                    }}
                                 />
                                 <Bar
                                     dataKey="profit"
-                                    fill="#22c55e"
-                                    radius={[8, 8, 0, 0]}
-                                    name="Profit (LYD)"
+                                    fill="url(#profitGradient)"
+                                    radius={[10, 10, 0, 0]}
+                                    name={t('calculator.profit')}
+                                    maxBarSize={50}
                                 />
                             </BarChart>
                         </ResponsiveContainer>

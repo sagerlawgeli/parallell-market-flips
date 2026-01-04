@@ -34,9 +34,10 @@ export function PaymentMethodFilter({ value, onChange }: PaymentMethodFilterProp
             <DropdownMenuTrigger asChild>
                 <button
                     className={cn(
-                        "flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-border/50 bg-muted/30 text-[10px] sm:text-xs font-bold uppercase tracking-tighter hover:bg-muted/50 transition-all whitespace-nowrap", value !== 'all'
-                        ? "text-primary border-primary/30 bg-primary/5"
-                        : "text-foreground"
+                        "flex items-center gap-1.5 px-2 py-1.5 rounded-xl border text-[10px] sm:text-xs font-bold uppercase tracking-tighter hover:bg-muted/50 transition-all whitespace-nowrap",
+                        value === 'hybrid' ? "text-purple-500 border-purple-500/30 bg-purple-500/5" :
+                            value !== 'all' ? "text-orange-500 border-orange-500/30 bg-orange-500/5" :
+                                "text-foreground border-border/50 bg-muted/30"
                     )}
                 >
                     <Icon className="h-4 w-4" />
