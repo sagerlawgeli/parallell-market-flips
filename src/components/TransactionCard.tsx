@@ -594,8 +594,13 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
                                         </div>
                                         {transaction.isHybrid && potentialCashProfit !== null && (
-                                            <div className="text-[10px] text-muted-foreground/50 line-through mt-0.5">
-                                                {potentialCashProfit > 0 ? "+" : ""}{formatCurrency(potentialCashProfit, 'LYD')}
+                                            <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                                                <div className="text-[10px] text-muted-foreground/40 line-through">
+                                                    {potentialCashProfit > 0 ? "+" : ""}{formatCurrency(potentialCashProfit, 'LYD')}
+                                                </div>
+                                                <div className="text-[10px] text-primary/80 font-bold bg-primary/10 px-1 rounded-sm border border-primary/20">
+                                                    +{formatCurrency(transaction.profit - potentialCashProfit, 'LYD')}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
