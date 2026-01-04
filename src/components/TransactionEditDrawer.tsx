@@ -488,7 +488,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                             value={manualProfit}
                             onChange={e => setManualProfit(e.target.value)}
                             className={cn(
-                                "text-3xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-right",
+                                "text-xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-right",
                                 parseFloat(manualProfit) >= 0 ? "text-green-500" : "text-red-500"
                             )}
                         />
