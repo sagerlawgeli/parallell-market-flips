@@ -272,8 +272,11 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
         const previewUrl = `${supabaseUrl}/functions/v1/transaction-preview?id=${displayId}`
 
         if (type === 'link') {
-            await navigator.clipboard.writeText(shareUrl)
-            toast.success(t('common.linkCopied') || "Link copied to clipboard")
+            // Open WhatsApp with just the URL
+            const encodedUrl = encodeURIComponent(shareUrl)
+            const whatsappUrl = `https://wa.me/?text=${encodedUrl}`
+            window.open(whatsappUrl, '_blank')
+            toast.success(t('common.shareWhatsapp') || "Opening WhatsApp...")
             return
         }
 
@@ -301,8 +304,14 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
             `📅 *Date:* ${date}\n\n` +
             `🔗 *Link:* ${previewUrl}`
 
-        await navigator.clipboard.writeText(message)
-        toast.success(t('common.copiedToWhatsapp') || "Formatted for WhatsApp & copied!")
+
+        // Open WhatsApp with pre-filled message
+        const encodedMessage = encodeURIComponent(message)
+        const whatsappUrl = `https://wa.me/?text=${encodedMessage}`
+
+        // Open in new window/tab
+        window.open(whatsappUrl, '_blank')
+        toast.success(t('common.shareWhatsapp') || "Opening WhatsApp...")
     }
 
     const potentialCashProfit = transaction.isHybrid
