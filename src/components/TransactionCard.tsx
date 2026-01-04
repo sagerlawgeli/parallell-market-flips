@@ -284,6 +284,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
             timeStyle: 'short'
         })
 
+
         const message = i18n.language === 'ar'
             ? `📦 *تفاصيل المعاملة - ${displayId}*\n\n` +
             `🕒 *الحالة:* ${t(`transaction.${transaction.status}`)}\n` +
@@ -304,6 +305,9 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
         toast.success(t('common.copiedToWhatsapp') || "Formatted for WhatsApp & copied!")
     }
 
+    const potentialCashProfit = transaction.isHybrid
+        ? (transaction.usdtAmount * transaction.usdtRate) - (transaction.fiatAmount * transaction.fiatRate)
+        : null
 
     return (
         <>
@@ -589,6 +593,11 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                         )}>
                                             {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
                                         </div>
+                                        {transaction.isHybrid && potentialCashProfit !== null && (
+                                            <div className="text-[10px] text-muted-foreground/50 line-through mt-0.5">
+                                                {potentialCashProfit > 0 ? "+" : ""}{formatCurrency(potentialCashProfit, 'LYD')}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

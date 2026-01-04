@@ -41,10 +41,10 @@ export default function Layout() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col overflow-x-hidden">
+        <div className="min-h-screen text-foreground flex flex-col overflow-x-hidden">
             <div className="flex-1 flex flex-row">
                 {/* Desktop Sidebar Navigation */}
-                <nav className="hidden md:block w-64 border-r bg-background/50 backdrop-blur-xl shrink-0 sticky top-0 h-screen overflow-y-auto">
+                <nav className="hidden md:block w-64 border-r bg-transparent backdrop-blur-xl shrink-0 sticky top-0 h-screen overflow-y-auto">
                     <div className="h-16 md:h-14 flex items-center px-6 border-b">
                         <div className="flex items-center gap-2 font-bold text-lg">
                             <span className="text-primary">Arbitrage</span>
@@ -82,7 +82,7 @@ export default function Layout() {
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Header */}
-                    <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
+                    <header className="sticky top-0 z-20 border-b bg-transparent backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
                         <div className="max-w-7xl mx-auto w-full flex h-16 md:h-14 items-center justify-between px-4 md:px-6">
                             {/* Mobile Logo */}
                             <motion.div
@@ -127,7 +127,7 @@ export default function Layout() {
             </div>
 
             {/* Bottom Navigation (Mobile) */}
-            <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-xl z-20 pb-safe md:hidden">
+            <nav className="fixed bottom-0 left-0 right-0 border-t bg-transparent backdrop-blur-xl z-20 pb-safe md:hidden">
                 <div className="flex justify-around items-center h-20 px-2">
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path

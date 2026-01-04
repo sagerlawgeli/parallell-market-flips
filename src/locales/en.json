@@ -141,7 +141,8 @@
         "editTitle": "Edit Transaction",
         "hybrid": "Hybrid",
         "bankProfitPath": "Bank Profit Rate @",
-        "bankRealized": "Realized in Bank"
+        "bankRealized": "Realized in Bank",
+        "potentialCashProfit": "Potential Cash Profit"
     },
     "holders": {
         "title": "Manage Holders",

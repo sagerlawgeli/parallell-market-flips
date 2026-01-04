@@ -24,7 +24,7 @@ function AppContent() {
   }, [i18n.language])
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return <div className="min-h-screen flex items-center justify-center text-foreground">Loading...</div>
   }
 
   return (

@@ -75,7 +75,7 @@ export default function PublicTransactionPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+            <div className="min-h-screen flex items-center justify-center text-foreground">
                 <div className="flex flex-col items-center gap-4">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     <p className="text-muted-foreground font-medium">{t('common.loading')}</p>
@@ -86,7 +86,7 @@ export default function PublicTransactionPage() {
 
     if (error || !transaction) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background px-4">
+            <div className="min-h-screen flex items-center justify-center px-4">
                 <Card className="max-w-md w-full border-red-500/20 bg-red-500/5">
                     <CardContent className="pt-6 text-center space-y-4">
                         <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
@@ -106,7 +106,7 @@ export default function PublicTransactionPage() {
     const displayId = getDisplayId(transaction.seqId || 0, transaction.paymentMethod)
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 flex items-center justify-center">
+        <div className="min-h-screen text-foreground p-4 sm:p-8 flex items-center justify-center">
             <div className="max-w-xl w-full space-y-6">
                 <div className="flex items-center gap-4 mb-2">
                     <Link to="/" className="p-2 rounded-full hover:bg-muted transition-colors">

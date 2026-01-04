@@ -141,7 +141,8 @@
         "editTitle": "تعديل المعاملة",
         "hybrid": "Hybrid",
         "bankProfitPath": "سعر بيع الربح المصرفي @",
-        "bankRealized": "متحقق في البنك"
+        "bankRealized": "متحقق في البنك",
+        "potentialCashProfit": "الربح النقدي المحتمل"
     },
     "holders": {
         "title": "إدارة الأمناء",
