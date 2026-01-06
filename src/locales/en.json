@@ -118,7 +118,11 @@
         "monthlyPerf": "Monthly Performance",
         "monthlyPerfDesc": "Profit by month vs 18,000 LYD target",
         "totalProgress": "Total Progress",
-        "target": "Target"
+        "target": "Target",
+        "totalSterlingPurchased": "Total Sterling Purchased",
+        "totalUsdtProcessed": "Total USDT Processed",
+        "volumePurchased": "Total fiat volume",
+        "volumeProcessed": "Total USDT volume"
     },
     "transaction": {
         "planned": "Planned",

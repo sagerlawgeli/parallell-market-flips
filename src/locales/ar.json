@@ -118,7 +118,11 @@
         "monthlyPerf": "الأداء الشهري",
         "monthlyPerfDesc": "الربح الشهري مقابل هدف 18,000 دينار",
         "totalProgress": "التقدم الإجمالي",
-        "target": "الهدف"
+        "target": "الهدف",
+        "totalSterlingPurchased": "اجمالي المشتري GBP",
+        "totalUsdtProcessed": "اجمالي المباع USDT",
+        "volumePurchased": "إجمالي حجم العملة",
+        "volumeProcessed": "إجمالي حجم USDT"
     },
     "transaction": {
         "planned": "مخطط",

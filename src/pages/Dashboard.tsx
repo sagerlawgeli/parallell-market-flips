@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { formatCurrency, cn } from "../lib/utils"
-import { TrendingUp, DollarSign, PieChart, Banknote, Building2, Target, Calendar } from "lucide-react"
+import { TrendingUp, DollarSign, PieChart, Banknote, Building2, Target, Calendar, Coins, ArrowRightLeft } from "lucide-react"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
@@ -35,7 +35,9 @@ export default function DashboardPage() {
         totalVolume: 0,
         totalTransactions: 0,
         avgProfit: 0,
-        avgMargin: 0
+        avgMargin: 0,
+        totalSterlingPurchased: 0,
+        totalUsdtProcessed: 0
     })
     const [chartData, setChartData] = useState<any[]>([])
     const [monthlyProgress, setMonthlyProgress] = useState({
@@ -104,7 +106,9 @@ export default function DashboardPage() {
                     totalVolume: 0,
                     totalTransactions: 0,
                     avgProfit: 0,
-                    avgMargin: 0
+                    avgMargin: 0,
+                    totalSterlingPurchased: 0,
+                    totalUsdtProcessed: 0
                 })
                 setChartData([])
                 setMonthlyProgress(prev => ({
@@ -127,6 +131,10 @@ export default function DashboardPage() {
             const totalCost = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0
 
+            // Volume metrics
+            const totalSterlingPurchased = data.reduce((sum, t) => sum + (t.fiat_amount || 0), 0)
+            const totalUsdtProcessed = data.reduce((sum, t) => sum + (t.usdt_amount || 0), 0)
+
             setMetrics({
                 totalProfit,
                 cashProfit,
@@ -134,7 +142,9 @@ export default function DashboardPage() {
                 totalVolume,
                 totalTransactions,
                 avgProfit,
-                avgMargin
+                avgMargin,
+                totalSterlingPurchased,
+                totalUsdtProcessed
             })
 
             const now = new Date()
@@ -266,6 +276,22 @@ export default function DashboardPage() {
             gradient: "from-orange-500/20 to-amber-500/20",
             iconColor: "text-orange-500"
         },
+        {
+            title: t('analytics.totalSterlingPurchased'),
+            value: formatCurrency(metrics.totalSterlingPurchased, 'GBP'),
+            subtitle: t('analytics.volumePurchased'),
+            icon: Coins,
+            gradient: "from-cyan-500/20 to-sky-500/20",
+            iconColor: "text-cyan-500"
+        },
+        {
+            title: t('analytics.totalUsdtProcessed'),
+            value: `${metrics.totalUsdtProcessed.toFixed(2)} USDT`,
+            subtitle: t('analytics.volumeProcessed'),
+            icon: ArrowRightLeft,
+            gradient: "from-indigo-500/20 to-blue-500/20",
+            iconColor: "text-indigo-500"
+        },
     ]
 
     return (
@@ -307,7 +333,7 @@ export default function DashboardPage() {
             )}
 
             {/* Key Metrics */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
                 {statCards.map((stat, index) => (
                     <motion.div
                         key={stat.title}
