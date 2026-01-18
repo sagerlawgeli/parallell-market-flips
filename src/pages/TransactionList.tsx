@@ -101,7 +101,9 @@ export default function TransactionListPage() {
                 holderName: txn.holders?.name,
                 seqId: txn.seq_id,
                 isHybrid: txn.is_hybrid,
-                usdtSellRateBank: txn.usdt_sell_rate_bank
+                usdtSellRateBank: txn.usdt_sell_rate_bank,
+                isRetained: txn.is_retained,
+                retainedSurplus: txn.retained_surplus
             }))
 
             setTransactions(formattedTransactions)

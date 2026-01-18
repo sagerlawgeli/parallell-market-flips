@@ -362,6 +362,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                                             {t('transaction.hybrid')}
                                                         </span>
                                                     )}
+                                                    {transaction.isRetained && (
+                                                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider">
+                                                            <Building2 className="h-2 w-2" />
+                                                            {t('calculator.retained') || "RETAINED"}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -592,6 +598,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
                                                 <RefreshCw className="h-3 w-3" />
                                                 <span className="text-xs font-bold uppercase tracking-tighter">{t('transaction.hybrid')}</span>
+                                            </div>
+                                        )}
+                                        {transaction.isRetained && (
+                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider">
+                                                <Building2 className="h-3 w-3" />
+                                                <span className="text-xs font-bold uppercase tracking-tighter">{t('calculator.retained') || "RETAINED"}</span>
                                             </div>
                                         )}
                                     </div>

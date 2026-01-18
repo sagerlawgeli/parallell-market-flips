@@ -99,7 +99,8 @@
         "bankProfitRate": "سعر ربح البنك",
         "usdtToCover": "USDT لتغطية التكلفة",
         "usdtSurplus": "USDT للربح (الفائض)",
-        "surplusToBank": "الفائض للبنك"
+        "surplusToBank": "الفائض للبنك",
+        "retained": "محتفظ"
     },
     "analytics": {
         "title": "التحليلات",

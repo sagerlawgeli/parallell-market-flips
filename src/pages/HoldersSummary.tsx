@@ -122,7 +122,9 @@ export default function HoldersSummaryPage() {
                         holderName: summary.name,
                         seqId: tx.seq_id,
                         isHybrid: tx.is_hybrid,
-                        usdtSellRateBank: tx.usdt_sell_rate_bank
+                        usdtSellRateBank: tx.usdt_sell_rate_bank,
+                        isRetained: tx.is_retained,
+                        retainedSurplus: tx.retained_surplus
                     })
                 }
             })

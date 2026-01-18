@@ -64,6 +64,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         status: "planned" as 'planned' | 'in_progress' | 'complete' | 'cancelled'
     })
     const [manualProfit, setManualProfit] = useState<string>("")
+    const [retainedManual, setRetainedManual] = useState(false)
 
     // Calculate live profit preview
     const valFiatAmount = parseFloat(editValues.fiatAmount) || 0
@@ -83,7 +84,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
 
     // Auto-calculate retained amount
     useEffect(() => {
-        if (editValues.isRetained) {
+        if (editValues.isRetained && !retainedManual) {
             // To simplify: Cost in USDT = (Fiat * Rate) / SellRate.
             const totalCost = valFiatAmount * valFiatRate // This is Total Cost.
 
@@ -101,7 +102,14 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
 
             setEditValues(prev => prev.retainedSurplus !== surplus.toFixed(2) ? { ...prev, retainedSurplus: surplus.toFixed(2) } : prev)
         }
-    }, [editValues.isRetained, valUsdtAmount, valUsdtRate, valFiatAmount, valFiatRate, editValues.isHybrid, editValues.usdtSellRateBank])
+    }, [editValues.isRetained, valUsdtAmount, valUsdtRate, valFiatAmount, valFiatRate, editValues.isHybrid, editValues.usdtSellRateBank, retainedManual])
+
+    // Reset manual flag when toggle is turned off/on or transaction loaded
+    useEffect(() => {
+        if (!editValues.isRetained) {
+            setRetainedManual(false)
+        }
+    }, [editValues.isRetained])
 
     // Fetch holders
     useEffect(() => {
@@ -507,21 +515,40 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                         </button>
                     </div>
                     {editValues.isRetained && (
-                        <div className="pt-2 mt-2 border-t border-blue-500/10">
-                            <div className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">{t('calculator.retainedAmount')}:</span>
-                                <span className="text-blue-600 font-bold font-mono">
-                                    {editValues.retainedSurplus} USDT
-                                </span>
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <Input
+                                    type="number"
+                                    value={editValues.retainedSurplus}
+                                    onChange={e => {
+                                        setEditValues({ ...editValues, retainedSurplus: e.target.value })
+                                        setRetainedManual(true)
+                                    }}
+                                    className="h-10 text-right font-mono font-bold text-blue-600 bg-blue-50/50 border-blue-200"
+                                />
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-blue-400 font-medium">USDT</span>
                             </div>
-                            {!editValues.holderId && (
-                                <p className="text-[10px] text-red-500 mt-2">
-                                    * {t('transaction.selectHolderWarning') || "Select a holder below"}
-                                </p>
-                            )}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setEditValues({ ...editValues, retainedSurplus: editValues.usdtAmount })
+                                    setRetainedManual(true)
+                                }}
+                                className="h-10 px-3 text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700 whitespace-nowrap"
+                                title={t('calculator.retainFull') || "Retain Full Amount"}
+                            >
+                                Max
+                            </Button>
                         </div>
                     )}
+                    {!editValues.holderId && (
+                        <p className="text-[10px] text-red-500 mt-2">
+                            * {t('transaction.selectHolderWarning') || "Select a holder below"}
+                        </p>
+                    )}
                 </div>
+
 
                 {/* Holder */}
                 <div>
@@ -641,6 +668,6 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     </Button>
                 </div>
             </div>
-        </BottomSheet>
+        </BottomSheet >
     )
 }

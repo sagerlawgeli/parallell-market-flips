@@ -321,7 +321,7 @@ export default function DashboardPage() {
         {
             title: t('analytics.retainedCapital') || "Retained Capital",
             value: `${metrics.totalRetainedUSDT.toFixed(2)} USDT`,
-            subtitle: t('analytics.totalRetained') || "Total Reserved",
+            subtitle: `≈ ${formatCurrency(metrics.retainedCapital, 'LYD')}`,
             icon: Building2, // Reusing icon or better one like Wallet
             gradient: "from-pink-500/20 to-rose-500/20",
             iconColor: "text-pink-500"

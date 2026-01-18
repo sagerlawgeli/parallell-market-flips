@@ -99,7 +99,8 @@
         "margin": "margin",
         "retainSurplus": "Retain Surplus",
         "retainDesc": "Keep surplus USDT as investment instead of converting to cash",
-        "retainedAmount": "Retained Amount"
+        "retainedAmount": "Retained Amount",
+        "retained": "RETAINED"
     },
     "analytics": {
         "title": "Analytics",
