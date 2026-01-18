@@ -7,6 +7,7 @@ import TransactionListPage from "./pages/TransactionList"
 import DashboardPage from "./pages/Dashboard"
 import AuthPage from "./pages/Auth"
 import HoldersPage from "./pages/Holders"
+import InvestmentHoldings from "./pages/InvestmentHoldings"
 import HoldersSummaryPage from "./pages/HoldersSummary"
 import PublicTransactionPage from "./pages/PublicTransactionPage"
 import "./i18n"
@@ -39,6 +40,7 @@ function AppContent() {
           <Route path="calculator" element={<CalculatorPage />} />
           <Route path="analytics" element={<DashboardPage />} />
           <Route path="holders" element={<HoldersPage />} />
+          <Route path="investments" element={<InvestmentHoldings />} />
           <Route path="holders-summary" element={<HoldersSummaryPage />} />
         </Route>
       </Routes>

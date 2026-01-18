@@ -1,10 +1,12 @@
 {
     "nav": {
         "ledger": "Ledger",
+        "transactions": "Transactions",
         "calculator": "Calculator",
         "analytics": "Analytics",
         "holders": "Holders",
-        "holdersSummary": "Cash"
+        "holdersSummary": "Cash",
+        "investments": "Investments"
     },
     "common": {
         "logout": "Logout",
@@ -22,7 +24,8 @@
         "shareWhatsapp": "Share to WhatsApp",
         "copyLink": "Copy Public Link",
         "linkCopied": "Link copied to clipboard",
-        "copiedToWhatsapp": "Formatted for WhatsApp & copied!"
+        "copiedToWhatsapp": "Formatted for WhatsApp & copied!",
+        "transactions": "Transactions"
     },
     "filter": {
         "visibility": "Visibility",
@@ -93,7 +96,10 @@
         "converted": "Converted",
         "resulting": "Resulting",
         "afterFees": "(after fees)",
-        "margin": "margin"
+        "margin": "margin",
+        "retainSurplus": "Retain Surplus",
+        "retainDesc": "Keep surplus USDT as investment instead of converting to cash",
+        "retainedAmount": "Retained Amount"
     },
     "analytics": {
         "title": "Analytics",
@@ -122,7 +128,10 @@
         "totalSterlingPurchased": "Total Sterling Purchased",
         "totalUsdtProcessed": "Total USDT Processed",
         "volumePurchased": "Total fiat volume",
-        "volumeProcessed": "Total USDT volume"
+        "volumeProcessed": "Total USDT volume",
+        "retainedCapital": "Retained Capital",
+        "totalRetained": "Total Reserved",
+        "includeRetained": "Include Retained (Est.)"
     },
     "transaction": {
         "planned": "Planned",
@@ -142,6 +151,8 @@
         "noHolder": "No holder assigned",
         "holderRequired": "Please assign a holder before marking as paid",
         "holderRequiredNote": "Holder is required when 'Fiat Paid' is checked",
+        "holderRequiredForRetention": "Please select a holder for retained funds",
+        "selectHolderWarning": "Select a holder below",
         "editTitle": "Edit Transaction",
         "hybrid": "Hybrid",
         "bankProfitPath": "Bank Profit Rate @",
@@ -153,6 +164,8 @@
         "subtitle": "Add and manage people who hold cash profits.",
         "listTitle": "Cash Holders",
         "addNew": "Add Holder",
+        "name": "Holder Name",
+        "isInvestor": "Is Investor Platform",
         "namePlaceholder": "Enter holder name...",
         "nameRequired": "Holder name is required",
         "noHolders": "No holders found. Add your first holder.",
@@ -176,6 +189,18 @@
         "transactionCount": "{{count}} transactions",
         "noData": "No holder data available",
         "fetchError": "Failed to load holders summary",
-        "pendingNotice": "Transaction not finalized, but cash being held"
+        "pendingNotice": "Transaction not finalized, but cash being held",
+        "noteAdded": "Note added",
+        "noteError": "Failed to add note",
+        "noNotes": "No notes yet",
+        "notePlaceholder": "Add a note..."
+    },
+    "investments": {
+        "title": "Investment Holdings",
+        "subtitle": "Track and manage your retained capital investments",
+        "totalCapital": "Total Retained Capital",
+        "searchPlaceholder": "Search investors...",
+        "recentActivity": "Recent Activity",
+        "noHoldings": "No investment holdings found"
     }
 }

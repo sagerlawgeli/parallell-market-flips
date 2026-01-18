@@ -13,28 +13,38 @@ import { useUserRole } from "../hooks/useUserRole"
 export default function CalculatorPage() {
     const { t } = useTranslation()
     const { isAdmin } = useUserRole()
-    const [currency, setCurrency] = useState<"GBP" | "EUR">("GBP")
-    const [targetMode, setTargetMode] = useState<"USDT" | "FIAT">("FIAT") // Default to FIAT input (I have X GBP)
+    // State initialization with localStorage fallback
+    const [currency, setCurrency] = useState<"GBP" | "EUR">(() =>
+        (localStorage.getItem('calc_currency') as "GBP" | "EUR") || "GBP"
+    )
+    const [targetMode, setTargetMode] = useState<"USDT" | "FIAT">(() =>
+        (localStorage.getItem('calc_targetMode') as "USDT" | "FIAT") || "FIAT"
+    )
 
     // Inputs
-    const [amount, setAmount] = useState<string>("") // The amount of the target (USDT or FIAT)
-    const [fiatBuyRate, setFiatBuyRate] = useState<string>("") // Cost in LYD per 1 Unit of Fiat
-    const [usdtSellRate, setUsdtSellRate] = useState<string>("") // Return in LYD per 1 Unit of USDT
+    const [amount, setAmount] = useState<string>(() => localStorage.getItem('calc_amount') || "")
+    const [fiatBuyRate, setFiatBuyRate] = useState<string>(() => localStorage.getItem('calc_fiatBuyRate') || "")
+    const [usdtSellRate, setUsdtSellRate] = useState<string>(() => localStorage.getItem('calc_usdtSellRate') || "")
 
     // Split Rates
-    const [forexRate, setForexRate] = useState<string>("1.19") // GBP -> EUR
-    const [cryptoRate, setCryptoRate] = useState<string>("1.05") // EUR -> USDT
+    const [forexRate, setForexRate] = useState<string>(() => localStorage.getItem('calc_forexRate') || "1.19")
+    const [cryptoRate, setCryptoRate] = useState<string>(() => localStorage.getItem('calc_cryptoRate') || "1.05")
 
     // Fees
-    const [revolutFee, setRevolutFee] = useState<string>("0.5") // % Spread/Fee
-    const [krakenFee, setKrakenFee] = useState<string>("0.26") // % Fee
+    const [revolutFee, setRevolutFee] = useState<string>(() => localStorage.getItem('calc_revolutFee') || "0.5")
+    const [krakenFee, setKrakenFee] = useState<string>(() => localStorage.getItem('calc_krakenFee') || "0.26")
 
     // New Fields
-    const [paymentMethod, setPaymentMethod] = useState<"cash" | "bank">("cash")
-    const [isHybrid, setIsHybrid] = useState(false)
-    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>("")
-    const [notes, setNotes] = useState<string>("")
-    const [isPrivate, setIsPrivate] = useState<boolean>(true)
+    const [paymentMethod, setPaymentMethod] = useState<"cash" | "bank">(() =>
+        (localStorage.getItem('calc_paymentMethod') as "cash" | "bank") || "cash"
+    )
+    const [isHybrid, setIsHybrid] = useState(() => localStorage.getItem('calc_isHybrid') === 'true')
+    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>(() => localStorage.getItem('calc_usdtSellRateBank') || "")
+    const [notes, setNotes] = useState<string>(() => localStorage.getItem('calc_notes') || "")
+    const [isPrivate, setIsPrivate] = useState<boolean>(() => {
+        const stored = localStorage.getItem('calc_isPrivate')
+        return stored ? stored === 'true' : true
+    })
 
     const [loadingRates, setLoadingRates] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -50,6 +60,28 @@ export default function CalculatorPage() {
         usdtAmount: 0,
         totalFees: 0 // Estimated total fees in LYD equivalent
     })
+
+    // Persistence Effect
+    useEffect(() => {
+        localStorage.setItem('calc_currency', currency)
+        localStorage.setItem('calc_targetMode', targetMode)
+        localStorage.setItem('calc_amount', amount)
+        localStorage.setItem('calc_fiatBuyRate', fiatBuyRate)
+        localStorage.setItem('calc_usdtSellRate', usdtSellRate)
+        localStorage.setItem('calc_forexRate', forexRate)
+        localStorage.setItem('calc_cryptoRate', cryptoRate)
+        localStorage.setItem('calc_revolutFee', revolutFee)
+        localStorage.setItem('calc_krakenFee', krakenFee)
+        localStorage.setItem('calc_paymentMethod', paymentMethod)
+        localStorage.setItem('calc_isHybrid', String(isHybrid))
+        localStorage.setItem('calc_usdtSellRateBank', usdtSellRateBank)
+        localStorage.setItem('calc_notes', notes)
+        localStorage.setItem('calc_isPrivate', String(isPrivate))
+    }, [
+        currency, targetMode, amount, fiatBuyRate, usdtSellRate,
+        forexRate, cryptoRate, revolutFee, krakenFee,
+        paymentMethod, isHybrid, usdtSellRateBank, notes, isPrivate
+    ])
 
     useEffect(() => {
         calculate()

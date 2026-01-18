@@ -58,7 +58,10 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         isPrivate: true,
         holderId: "",
         isHybrid: false,
-        usdtSellRateBank: ""
+        usdtSellRateBank: "",
+        isRetained: false,
+        retainedSurplus: "",
+        status: "planned" as 'planned' | 'in_progress' | 'complete' | 'cancelled'
     })
     const [manualProfit, setManualProfit] = useState<string>("")
 
@@ -77,6 +80,28 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         const surplusUsdt = Math.max(0, valUsdtAmount - usdtToCoverCost)
         calculatedProfit = surplusUsdt * valUsdtSellRateBank
     }
+
+    // Auto-calculate retained amount
+    useEffect(() => {
+        if (editValues.isRetained) {
+            // To simplify: Cost in USDT = (Fiat * Rate) / SellRate.
+            const totalCost = valFiatAmount * valFiatRate // This is Total Cost.
+
+            // Retaining surplus means: We only convert enough USDT to cover Total Cost.
+            // Amount to Convert * SellRate = TotalCost.
+            // Amount to Convert = TotalCost / SellRate.
+            // Surplus = valUsdtAmount - Amount to Convert.
+
+            const sellRate = (editValues.isHybrid && editValues.paymentMethod === 'cash')
+                ? (parseFloat(editValues.usdtSellRateBank) || valUsdtRate)
+                : valUsdtRate
+
+            const amountToConvert = sellRate > 0 ? totalCost / sellRate : 0
+            const surplus = Math.max(0, valUsdtAmount - amountToConvert)
+
+            setEditValues(prev => prev.retainedSurplus !== surplus.toFixed(2) ? { ...prev, retainedSurplus: surplus.toFixed(2) } : prev)
+        }
+    }, [editValues.isRetained, valUsdtAmount, valUsdtRate, valFiatAmount, valFiatRate, editValues.isHybrid, editValues.usdtSellRateBank])
 
     // Fetch holders
     useEffect(() => {
@@ -102,12 +127,15 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 usdtAmount: transaction.usdtAmount?.toString() ?? "",
                 usdtRate: transaction.usdtRate?.toString() ?? "",
                 paymentMethod: transaction.paymentMethod,
-                createdAt: formatDateForInput(transaction.createdAt),
+                createdAt: transaction.createdAt ? formatDateForInput(transaction.createdAt) : "",
                 notes: transaction.notes || "",
                 isPrivate: transaction.isPrivate,
                 holderId: transaction.holderId || "",
                 isHybrid: transaction.isHybrid || false,
-                usdtSellRateBank: transaction.usdtSellRateBank?.toString() ?? ""
+                usdtSellRateBank: transaction.usdtSellRateBank?.toString() ?? "",
+                isRetained: transaction.isRetained || false,
+                retainedSurplus: transaction.retainedSurplus?.toString() ?? "",
+                status: transaction.status || "planned"
             })
             setManualProfit(transaction.profit?.toString() ?? "")
         }
@@ -128,6 +156,8 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             editValues.holderId !== (transaction.holderId || "") ||
             editValues.isHybrid !== (transaction.isHybrid || false) ||
             (parseFloat(editValues.usdtSellRateBank) || 0) !== (transaction.usdtSellRateBank || 0) ||
+            editValues.isRetained !== (transaction.isRetained || false) ||
+            editValues.status !== (transaction.status || 'planned') ||
             parseFloat(manualProfit) !== transaction.profit
         )
     }
@@ -188,6 +218,11 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
+            if (editValues.isRetained && !editValues.holderId) {
+                toast.error(t('transaction.holderRequiredForRetention') || "Please select a holder for retained funds")
+                return
+            }
+
             const updates: any = {
                 fiat_amount: valFiatAmount,
                 fiat_buy_rate: valFiatRate,
@@ -200,6 +235,9 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 holder_id: editValues.holderId || null,
                 is_hybrid: editValues.isHybrid && editValues.paymentMethod === 'cash',
                 usdt_sell_rate_bank: (editValues.isHybrid && editValues.paymentMethod === 'cash') ? (parseFloat(editValues.usdtSellRateBank) || 0) : null,
+                is_retained: editValues.isRetained,
+                retained_surplus: editValues.isRetained ? (parseFloat(editValues.retainedSurplus) || 0) : 0,
+                status: editValues.status,
                 updated_at: new Date().toISOString()
             }
 
@@ -236,7 +274,10 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     notes: editValues.notes,
                     isPrivate: editValues.isPrivate,
                     isHybrid: editValues.isHybrid,
-                    usdtSellRateBank: parseFloat(editValues.usdtSellRateBank) || 0
+                    usdtSellRateBank: parseFloat(editValues.usdtSellRateBank) || 0,
+                    isRetained: editValues.isRetained,
+                    retainedSurplus: editValues.retainedSurplus,
+                    status: editValues.status
                 }
             }
 
@@ -283,6 +324,27 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                             onChange={e => setEditValues({ ...editValues, createdAt: e.target.value })}
                             className="h-12 text-base pl-10 cursor-pointer"
                         />
+                    </div>
+                </div>
+
+                {/* Status Selector */}
+                <div>
+                    <label className="block text-sm font-medium mb-2">{t('filter.status') || "Status"}</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {(['planned', 'in_progress', 'complete'] as const).map(s => (
+                            <button
+                                key={s}
+                                onClick={() => setEditValues({ ...editValues, status: s })}
+                                className={cn(
+                                    "h-9 rounded-lg text-xs font-medium transition-colors border",
+                                    editValues.status === s
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-background text-muted-foreground border-input hover:bg-accent"
+                                )}
+                            >
+                                {t(`transaction.${s === 'in_progress' ? 'inProgress' : s}`)}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -420,13 +482,57 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     </div>
                 )}
 
+                {/* Retention Toggle */}
+                <div className="bg-blue-500/5 rounded-2xl p-4 border border-blue-500/10 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="space-y-0.5">
+                            <h3 className="font-semibold text-sm">{t('calculator.retainSurplus') || "Retain Surplus"}</h3>
+                            <p className="text-[10px] text-muted-foreground italic">
+                                {t('calculator.retainDesc') || "Keep surplus USDT as investment instead of converting to cash"}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setEditValues({ ...editValues, isRetained: !editValues.isRetained })}
+                            className={cn(
+                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                editValues.isRetained ? "bg-blue-500" : "bg-muted"
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                    editValues.isRetained ? "translate-x-6" : "translate-x-1"
+                                )}
+                            />
+                        </button>
+                    </div>
+                    {editValues.isRetained && (
+                        <div className="pt-2 mt-2 border-t border-blue-500/10">
+                            <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">{t('calculator.retainedAmount')}:</span>
+                                <span className="text-blue-600 font-bold font-mono">
+                                    {editValues.retainedSurplus} USDT
+                                </span>
+                            </div>
+                            {!editValues.holderId && (
+                                <p className="text-[10px] text-red-500 mt-2">
+                                    * {t('transaction.selectHolderWarning') || "Select a holder below"}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
                 {/* Holder */}
                 <div>
                     <label className="block text-sm font-medium mb-2">{t('transaction.holder')}</label>
                     <select
                         value={editValues.holderId}
                         onChange={(e) => setEditValues({ ...editValues, holderId: e.target.value })}
-                        className="w-full h-12 px-4 text-base border border-input bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        className={cn(
+                            "w-full h-12 px-4 text-base border bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary",
+                            (editValues.isRetained && !editValues.holderId) ? "border-red-300 ring-1 ring-red-200" : "border-input"
+                        )}
                     >
                         <option value="">{t('transaction.selectHolder')}</option>
                         {holders.map((holder) => (

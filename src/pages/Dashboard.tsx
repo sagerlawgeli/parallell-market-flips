@@ -37,9 +37,12 @@ export default function DashboardPage() {
         avgProfit: 0,
         avgMargin: 0,
         totalSterlingPurchased: 0,
-        totalUsdtProcessed: 0
+        totalUsdtProcessed: 0,
+        retainedCapital: 0,
+        totalRetainedUSDT: 0
     })
     const [chartData, setChartData] = useState<any[]>([])
+    const [includeRetained, setIncludeRetained] = useState(false)
     const [monthlyProgress, setMonthlyProgress] = useState({
         currentMonthProfit: 0,
         target: 18000,
@@ -52,7 +55,7 @@ export default function DashboardPage() {
         if (!roleLoading) {
             fetchData()
         }
-    }, [visibilityFilter, paymentMethodFilter, statusFilter, dateRange, isAdmin, roleLoading])
+    }, [visibilityFilter, paymentMethodFilter, statusFilter, dateRange, isAdmin, roleLoading, includeRetained])
 
     const fetchData = async () => {
         try {
@@ -108,7 +111,9 @@ export default function DashboardPage() {
                     avgProfit: 0,
                     avgMargin: 0,
                     totalSterlingPurchased: 0,
-                    totalUsdtProcessed: 0
+                    totalUsdtProcessed: 0,
+                    retainedCapital: 0,
+                    totalRetainedUSDT: 0
                 })
                 setChartData([])
                 setMonthlyProgress(prev => ({
@@ -121,14 +126,33 @@ export default function DashboardPage() {
                 return
             }
 
-            const totalProfit = data.reduce((sum, t) => sum + (t.profit || 0), 0)
-            const cashProfit = data.filter(t => t.payment_method === 'cash' && !t.is_hybrid).reduce((sum, t) => sum + (t.profit || 0), 0)
-            const bankProfit = data.filter(t => t.payment_method === 'bank' || (t.payment_method === 'cash' && t.is_hybrid)).reduce((sum, t) => sum + (t.profit || 0), 0)
+            const totalRetainedUSDT = data.reduce((sum, t) => sum + (parseFloat(t.retained_surplus) || 0), 0)
+
+            // Calculate Estimated Retained Profit (Fiat)
+            // If retained, surplus * (bank rate || usdt rate).
+            const estimatedRetainedProfit = data.reduce((sum, t) => {
+                if (!t.is_retained) return sum
+                const surplus = parseFloat(t.retained_surplus) || 0
+                const rate = t.usdt_sell_rate_bank || t.usdt_sell_rate
+                return sum + (surplus * rate)
+            }, 0)
+
+            let totalProfit = data.reduce((sum, t) => sum + (t.profit || 0), 0)
+
+            if (includeRetained) {
+                totalProfit += estimatedRetainedProfit
+            }
+
+            const cashProfit = data.filter(t => t.payment_method === 'cash' && !t.is_hybrid && !t.is_retained).reduce((sum, t) => sum + (t.profit || 0), 0)
+            const bankProfit = data.filter(t => (t.payment_method === 'bank' || (t.payment_method === 'cash' && t.is_hybrid)) && !t.is_retained).reduce((sum, t) => sum + (t.profit || 0), 0)
             const totalVolume = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
             const totalTransactions = data.length
             const avgProfit = totalTransactions > 0 ? totalProfit / totalTransactions : 0
 
             const totalCost = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
+            // Margin including retained? Probably complex. 
+            // If includeRetained, TotalRevenue = (Realized Profit + Cost) + (Retained Profit).
+            // Margin = TotalProfit / TotalCost.
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0
 
             // Volume metrics
@@ -144,7 +168,9 @@ export default function DashboardPage() {
                 avgProfit,
                 avgMargin,
                 totalSterlingPurchased,
-                totalUsdtProcessed
+                totalUsdtProcessed,
+                retainedCapital: estimatedRetainedProfit, // Used for Value? Or we want USDT? let's stick to totalRetainedUSDT for the card.
+                totalRetainedUSDT
             })
 
             const now = new Date()
@@ -292,6 +318,14 @@ export default function DashboardPage() {
             gradient: "from-indigo-500/20 to-blue-500/20",
             iconColor: "text-indigo-500"
         },
+        {
+            title: t('analytics.retainedCapital') || "Retained Capital",
+            value: `${metrics.totalRetainedUSDT.toFixed(2)} USDT`,
+            subtitle: t('analytics.totalRetained') || "Total Reserved",
+            icon: Building2, // Reusing icon or better one like Wallet
+            gradient: "from-pink-500/20 to-rose-500/20",
+            iconColor: "text-pink-500"
+        }
     ]
 
     return (
@@ -306,6 +340,27 @@ export default function DashboardPage() {
                 <p className="text-muted-foreground text-sm md:text-base">
                     {t('analytics.subtitle')}
                 </p>
+            </div>
+
+            <div className="flex justify-end mb-4 sm:mb-0">
+                <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
+                    <span className="text-xs text-muted-foreground">{t('analytics.includeRetained') || "Include Retained (Est.)"}</span>
+                    <button
+                        onClick={() => setIncludeRetained(!includeRetained)}
+                        className={cn(
+                            "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
+                            includeRetained ? "bg-primary" : "bg-muted-foreground/30"
+                        )}
+                    >
+                        <span
+                            className={cn(
+                                "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform",
+                                includeRetained ? "translate-x-4.5" : "translate-x-0.5"
+                            )}
+                            style={{ transform: includeRetained ? 'translateX(18px)' : 'translateX(2px)' }}
+                        />
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}

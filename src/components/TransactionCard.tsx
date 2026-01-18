@@ -65,6 +65,8 @@ export interface Transaction {
     seqId?: number
     isHybrid?: boolean
     usdtSellRateBank?: number
+    isRetained?: boolean
+    retainedSurplus?: number
 }
 
 interface TransactionCardProps {

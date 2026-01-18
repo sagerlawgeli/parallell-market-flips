@@ -1,10 +1,12 @@
 {
     "nav": {
         "ledger": "السجل",
+        "transactions": "المعاملات",
         "calculator": "الحاسبة",
         "analytics": "التحليلات",
         "holders": "الأمناء",
-        "holdersSummary": "النقد"
+        "holdersSummary": "النقد",
+        "investments": "الاستثمارات"
     },
     "common": {
         "logout": "خروج",
@@ -22,7 +24,8 @@
         "shareWhatsapp": "مشاركة عبر واتساب",
         "copyLink": "نسخ الرابط العام",
         "linkCopied": "تم نسخ الرابط",
-        "copiedToWhatsapp": "تم التنسيق للواتساب والنسخ!"
+        "copiedToWhatsapp": "تم التنسيق للواتساب والنسخ!",
+        "transactions": "معاملات"
     },
     "filter": {
         "visibility": "الرؤية",
@@ -84,6 +87,9 @@
         "resulting": "الناتج",
         "afterFees": "(بعد الرسوم)",
         "margin": "هامش",
+        "retainSurplus": "احتفاظ بالفائض",
+        "retainDesc": "الاحتفاظ بفائض USDT كاستثمار بدلاً من تحويله لنقد",
+        "retainedAmount": "المبلغ المحتفظ به",
         "save": "حفظ المعاملة",
         "notes": "ملاحظات",
         "notesPlaceholder": "أضف ملاحظات...",
@@ -122,7 +128,10 @@
         "totalSterlingPurchased": "اجمالي المشتري GBP",
         "totalUsdtProcessed": "اجمالي المباع USDT",
         "volumePurchased": "إجمالي حجم العملة",
-        "volumeProcessed": "إجمالي حجم USDT"
+        "volumeProcessed": "إجمالي حجم USDT",
+        "retainedCapital": "رأس المال المحتفظ به",
+        "totalRetained": "إجمالي المحجوز",
+        "includeRetained": "تضمين المحتفظ به (تقديري)"
     },
     "transaction": {
         "planned": "مخطط",
@@ -142,6 +151,8 @@
         "noHolder": "لم يتم تعيين أمين",
         "holderRequired": "يرجى تعيين أمين قبل وضع علامة كمدفوع",
         "holderRequiredNote": "الأمين مطلوب عند تحديد 'تم الدفع'",
+        "holderRequiredForRetention": "يرجى اختيار أمين للأموال المحتفظ بها",
+        "selectHolderWarning": "اختر أميناً أدناه",
         "editTitle": "تعديل المعاملة",
         "hybrid": "Hybrid",
         "bankProfitPath": "سعر بيع الربح المصرفي @",
@@ -153,6 +164,8 @@
         "subtitle": "إضافة وإدارة الأشخاص الذين يحملون الأرباح النقدية.",
         "listTitle": "أمناء النقد",
         "addNew": "إضافة أمين",
+        "name": "اسم الأمين",
+        "isInvestor": "هو منصة استثمار",
         "namePlaceholder": "أدخل اسم الأمين...",
         "nameRequired": "اسم الأمين مطلوب",
         "noHolders": "لا يوجد أمناء. أضف أول أمين.",
@@ -176,6 +189,18 @@
         "transactionCount": "{{count}} معاملة",
         "noData": "لا توجد بيانات أمناء",
         "fetchError": "فشل في تحميل ملخص الأمناء",
-        "pendingNotice": "المعاملة لم تكتمل، ولكن تم الاحتفاظ بالنقد"
+        "pendingNotice": "المعاملة لم تكتمل، ولكن تم الاحتفاظ بالنقد",
+        "noteAdded": "تمت إضافة ملاحظة",
+        "noteError": "فشل إضافة ملاحظة",
+        "noNotes": "لا توجد ملاحظات",
+        "notePlaceholder": "أضف ملاحظة..."
+    },
+    "investments": {
+        "title": "الاستثمارات",
+        "subtitle": "تتبع وإدارة استثمارات رأس المال المحتفظ به",
+        "totalCapital": "إجمالي رأس المال المحتفظ به",
+        "searchPlaceholder": "البحث عن المستثمرين...",
+        "recentActivity": "النشاط الأخير",
+        "noHoldings": "لا توجد استثمارات"
     }
 }

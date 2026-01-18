@@ -10,6 +10,8 @@ import { format } from "date-fns"
 import { TransactionEditDrawer } from "../components/TransactionEditDrawer"
 import type { Transaction } from "../components/TransactionCard"
 import { useUserRole } from "../hooks/useUserRole"
+import { useHolderNotes } from "../hooks/useHolderNotes"
+import { Plus, Clock } from "lucide-react"
 
 interface HolderSummary {
     id: string
@@ -17,6 +19,13 @@ interface HolderSummary {
     totalProfit: number
     transactionCount: number
     transactions: Transaction[]
+    notes: HolderNote[]
+}
+
+interface HolderNote {
+    id: string
+    content: string
+    createdAt: string
 }
 
 export default function HoldersSummaryPage() {
@@ -59,14 +68,33 @@ export default function HoldersSummaryPage() {
 
             const summaryMap = new Map<string, HolderSummary>()
 
+            const { data: notes, error: notesError } = await supabase
+                .from('holder_notes')
+                .select('*')
+                .order('created_at', { ascending: false })
+
+            if (notesError) throw notesError
+
             holders.forEach((holder: any) => {
                 summaryMap.set(holder.id, {
                     id: holder.id,
                     name: holder.name,
                     totalProfit: 0,
                     transactionCount: 0,
-                    transactions: []
+                    transactions: [],
+                    notes: []
                 })
+            })
+
+            // Populate notes
+            notes?.forEach((note: any) => {
+                if (summaryMap.has(note.holder_id)) {
+                    summaryMap.get(note.holder_id)!.notes.push({
+                        id: note.id,
+                        content: note.content,
+                        createdAt: format(new Date(note.created_at), 'MMM d, h:mm a')
+                    })
+                }
             })
 
             transactions.forEach((tx: any) => {
@@ -136,6 +164,8 @@ export default function HoldersSummaryPage() {
             setLoading(false)
         }
     }
+
+    const { addNote } = useHolderNotes(fetchHoldersSummary)
 
     const toggleExpand = (holderId: string) => {
         setExpandedHolderId(expandedHolderId === holderId ? null : holderId)
@@ -295,52 +325,114 @@ export default function HoldersSummaryPage() {
                                                 exit={{ height: 0, opacity: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                <CardContent className="pt-0">
-                                                    <div className="border-t pt-4">
+                                                <CardContent className="pt-0 space-y-6">
+                                                    {/* Transactions Section */}
+                                                    <div>
                                                         <h4 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
                                                             {t('holdersSummary.transactions')}
                                                         </h4>
-                                                        <div className="space-y-2">
-                                                            {holder.transactions.map((tx) => (
-                                                                <motion.div
-                                                                    key={tx.id}
-                                                                    initial={{ opacity: 0, x: -20 }}
-                                                                    animate={{ opacity: 1, x: 0 }}
-                                                                    className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                                                                    onClick={() => {
-                                                                        setSelectedTransaction(tx)
-                                                                        setIsEditDrawerOpen(true)
-                                                                    }}
-                                                                >
-                                                                    <div className="flex flex-col gap-2 min-w-0 flex-1 mr-3">
-                                                                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                                                            <div className="font-mono bg-background px-1.5 py-0.5 rounded text-[10px] font-bold text-muted-foreground tracking-wider uppercase shrink-0">
-                                                                                {getDisplayId(tx.seqId, tx.paymentMethod)}
+                                                        {holder.transactions.length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {holder.transactions.map((tx) => (
+                                                                    <motion.div
+                                                                        key={tx.id}
+                                                                        initial={{ opacity: 0, x: -20 }}
+                                                                        animate={{ opacity: 1, x: 0 }}
+                                                                        className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                                                                        onClick={() => {
+                                                                            setSelectedTransaction(tx)
+                                                                            setIsEditDrawerOpen(true)
+                                                                        }}
+                                                                    >
+                                                                        {/* ... existing transaction content ... */}
+                                                                        <div className="flex flex-col gap-2 min-w-0 flex-1 mr-3">
+                                                                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                                                                <div className="font-mono bg-background px-1.5 py-0.5 rounded text-[10px] font-bold text-muted-foreground tracking-wider uppercase shrink-0">
+                                                                                    {getDisplayId(tx.seqId, tx.paymentMethod)}
+                                                                                </div>
+                                                                                <div className="font-bold text-sm truncate">{tx.type}</div>
+                                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap opacity-60 font-medium">{tx.createdAt}</div>
                                                                             </div>
-                                                                            <div className="font-bold text-sm truncate">{tx.type}</div>
-                                                                            <div className="text-[10px] text-muted-foreground whitespace-nowrap opacity-60 font-medium">{tx.createdAt}</div>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <div className="text-[9px] px-1.5 py-0.5 rounded-md bg-background text-muted-foreground uppercase font-black tracking-tighter border border-border/50">
-                                                                                {tx.paymentMethod}
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <div className="text-[9px] px-1.5 py-0.5 rounded-md bg-background text-muted-foreground uppercase font-black tracking-tighter border border-border/50">
+                                                                                    {tx.paymentMethod}
+                                                                                </div>
+                                                                                {tx.isHybrid && (
+                                                                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
+                                                                                        <RefreshCw className="h-2 w-2" />
+                                                                                        {t('transaction.hybrid')}
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
-                                                                            {tx.isHybrid && (
-                                                                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
-                                                                                    <RefreshCw className="h-2 w-2" />
-                                                                                    {t('transaction.hybrid')}
-                                                                                </span>
-                                                                            )}
                                                                         </div>
-                                                                    </div>
 
-                                                                    <div className={cn(
-                                                                        "font-black text-sm sm:text-base whitespace-nowrap shrink-0",
-                                                                        tx.profit >= 0 ? 'text-green-500' : 'text-red-500'
-                                                                    )}>
-                                                                        {tx.profit > 0 ? '+' : ''}{formatCurrency(tx.profit, 'LYD')}
+                                                                        <div className={cn(
+                                                                            "font-black text-sm sm:text-base whitespace-nowrap shrink-0",
+                                                                            tx.profit >= 0 ? 'text-green-500' : 'text-red-500'
+                                                                        )}>
+                                                                            {tx.profit > 0 ? '+' : ''}{formatCurrency(tx.profit, 'LYD')}
+                                                                        </div>
+                                                                    </motion.div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-sm text-muted-foreground italic">{t('common.noData')}</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Notes Section */}
+                                                    <div className="border-t pt-4">
+                                                        <h4 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+                                                            {t('common.notes')}
+                                                        </h4>
+
+                                                        {/* Notes List */}
+                                                        <div className="space-y-3 mb-4 max-h-[200px] overflow-y-auto">
+                                                            {holder.notes.length > 0 ? (
+                                                                holder.notes.map((note) => (
+                                                                    <div key={note.id} className="flex gap-3 text-sm group">
+                                                                        <div className="mt-0.5 opacity-30">
+                                                                            <Clock className="w-3 h-3" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-muted-foreground/50 text-[10px] uppercase font-mono mb-0.5">
+                                                                                {note.createdAt}
+                                                                            </p>
+                                                                            <p className="text-foreground/90 leading-relaxed font-medium">
+                                                                                {note.content}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
-                                                                </motion.div>
-                                                            ))}
+                                                                ))
+                                                            ) : (
+                                                                <p className="text-sm text-muted-foreground/50 italic pl-6">{t('holdersSummary.noNotes')}</p>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Add Note Input */}
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder={t('holdersSummary.notePlaceholder') || "Add a note..."}
+                                                                className="flex-1 h-9 rounded-lg bg-background border border-input px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        const input = e.currentTarget
+                                                                        addNote(holder.id, input.value)
+                                                                        input.value = ''
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <button
+                                                                className="h-9 w-9 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                                                onClick={(e) => {
+                                                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement
+                                                                    addNote(holder.id, input.value)
+                                                                    input.value = ''
+                                                                }}
+                                                            >
+                                                                <Plus className="h-4 w-4" />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </CardContent>

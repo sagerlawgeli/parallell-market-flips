@@ -18,6 +18,8 @@ export default function HoldersPage() {
     const [editName, setEditName] = useState("")
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
     const [newHolderName, setNewHolderName] = useState("")
+    const [newIsInvestor, setNewIsInvestor] = useState(false)
+    const [editIsInvestor, setEditIsInvestor] = useState(false)
 
     useEffect(() => {
         fetchHolders()
@@ -36,7 +38,8 @@ export default function HoldersPage() {
                 id: h.id,
                 name: h.name,
                 createdAt: h.created_at,
-                createdBy: h.created_by
+                createdBy: h.created_by,
+                isInvestor: h.is_investor || false
             }))
 
             setHolders(formattedHolders)
@@ -62,7 +65,8 @@ export default function HoldersPage() {
                 .from('holders')
                 .insert({
                     name: newHolderName.trim(),
-                    created_by: user.id
+                    created_by: user.id,
+                    is_investor: newIsInvestor
                 })
 
             if (error) throw error
@@ -90,7 +94,10 @@ export default function HoldersPage() {
         try {
             const { error } = await supabase
                 .from('holders')
-                .update({ name: editName.trim() })
+                .update({
+                    name: editName.trim(),
+                    is_investor: editIsInvestor
+                })
                 .eq('id', editingHolder.id)
 
             if (error) throw error
@@ -131,6 +138,7 @@ export default function HoldersPage() {
     const startEdit = (holder: Holder) => {
         setEditingHolder(holder)
         setEditName(holder.name)
+        setEditIsInvestor(holder.isInvestor || false)
     }
 
     return (
@@ -233,6 +241,7 @@ export default function HoldersPage() {
                 onClose={() => {
                     setIsAddSheetOpen(false)
                     setNewHolderName("")
+                    setNewIsInvestor(false)
                 }}
                 title={t('holders.addNew')}
             >
@@ -249,6 +258,19 @@ export default function HoldersPage() {
                             className="h-12 text-base rounded-xl"
                             autoFocus
                         />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            id="newIsInvestor"
+                            checked={newIsInvestor}
+                            onChange={(e) => setNewIsInvestor(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+                        />
+                        <label htmlFor="newIsInvestor" className="text-sm font-medium cursor-pointer">
+                            {t('holders.isInvestor') || "Is Investor Platform"}
+                        </label>
                     </div>
 
                     <div className="flex gap-3">
@@ -294,6 +316,19 @@ export default function HoldersPage() {
                             className="h-12 text-base rounded-xl"
                             autoFocus
                         />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            id="editIsInvestor"
+                            checked={editIsInvestor}
+                            onChange={(e) => setEditIsInvestor(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+                        />
+                        <label htmlFor="editIsInvestor" className="text-sm font-medium cursor-pointer">
+                            {t('holders.isInvestor') || "Is Investor Platform"}
+                        </label>
                     </div>
 
                     <div className="flex gap-3">
