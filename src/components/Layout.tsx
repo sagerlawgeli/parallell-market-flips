@@ -1,10 +1,12 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { Calculator, List, LayoutDashboard, LogOut, Languages, Users, Wallet, Briefcase } from "lucide-react"
+import { Calculator, List, LayoutDashboard, LogOut, Languages, Users, Wallet, Briefcase, MoreHorizontal } from "lucide-react"
 import { cn } from "../lib/utils"
 import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
+import { BottomSheet } from "./ui/bottom-sheet"
+import { useState } from "react"
 
 export default function Layout() {
     const location = useLocation()
@@ -40,6 +42,15 @@ export default function Layout() {
         i18n.changeLanguage(newLang)
         localStorage.setItem('language', newLang)
     }
+
+    const [isMoreOpen, setIsMoreOpen] = useState(false)
+    const MAX_VISIBLE_ITEMS = 3
+
+    const visibleItems = navItems.slice(0, MAX_VISIBLE_ITEMS)
+    const overflowItems = navItems.slice(MAX_VISIBLE_ITEMS)
+    const hasOverflow = overflowItems.length > 0
+
+    const isOverflowActive = overflowItems.some(item => location.pathname === item.path)
 
     return (
         <div className="min-h-screen text-foreground flex flex-col overflow-x-hidden">
@@ -130,7 +141,7 @@ export default function Layout() {
             {/* Bottom Navigation (Mobile) */}
             <nav className="fixed bottom-0 left-0 right-0 border-t bg-transparent backdrop-blur-xl z-20 pb-safe md:hidden">
                 <div className="flex justify-around items-center h-20 px-2">
-                    {navItems.map((item) => {
+                    {visibleItems.map((item) => {
                         const isActive = location.pathname === item.path
                         return (
                             <Link
@@ -174,8 +185,81 @@ export default function Layout() {
                             </Link>
                         )
                     })}
+
+                    {/* More Button */}
+                    {hasOverflow && (
+                        <button
+                            onClick={() => setIsMoreOpen(true)}
+                            className="relative flex flex-col items-center justify-center w-full h-full"
+                        >
+                            <motion.div
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl transition-all",
+                                    isMoreOpen || isOverflowActive
+                                        ? "text-primary"
+                                        : "text-muted-foreground"
+                                )}
+                                whileTap={{ scale: 0.9 }}
+                            >
+                                {(isMoreOpen || isOverflowActive) && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="absolute inset-0 bg-primary/10 rounded-2xl"
+                                        transition={{
+                                            type: "spring",
+                                            stiffness: 500,
+                                            damping: 30
+                                        }}
+                                    />
+                                )}
+
+                                <MoreHorizontal className={cn(
+                                    "h-6 w-6 relative z-10 transition-transform",
+                                    (isMoreOpen || isOverflowActive) && "scale-110"
+                                )} />
+                                <span className={cn(
+                                    "text-xs font-medium relative z-10",
+                                    (isMoreOpen || isOverflowActive) && "font-semibold"
+                                )}>
+                                    {t('common.more')}
+                                </span>
+                            </motion.div>
+                        </button>
+                    )}
                 </div>
             </nav>
+
+            <BottomSheet
+                isOpen={isMoreOpen}
+                onClose={() => setIsMoreOpen(false)}
+                title={t('common.more')}
+            >
+                <div className="grid gap-2 p-4">
+                    {overflowItems.map((item) => {
+                        const isActive = location.pathname === item.path
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                onClick={() => setIsMoreOpen(false)}
+                            >
+                                <motion.div
+                                    className={cn(
+                                        "flex items-center gap-4 px-4 py-3 rounded-xl transition-all border",
+                                        isActive
+                                            ? "text-primary bg-primary/10 border-primary/20 font-semibold"
+                                            : "text-muted-foreground border-transparent hover:bg-muted/50 hover:text-foreground"
+                                    )}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    <item.icon className="h-5 w-5" />
+                                    <span className="text-base">{item.label}</span>
+                                </motion.div>
+                            </Link>
+                        )
+                    })}
+                </div>
+            </BottomSheet>
         </div>
     )
 }

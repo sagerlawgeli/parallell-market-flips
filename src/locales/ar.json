@@ -25,7 +25,8 @@
         "copyLink": "نسخ الرابط العام",
         "linkCopied": "تم نسخ الرابط",
         "copiedToWhatsapp": "تم التنسيق للواتساب والنسخ!",
-        "transactions": "معاملات"
+        "transactions": "معاملات",
+        "more": "المزيد"
     },
     "filter": {
         "visibility": "الرؤية",

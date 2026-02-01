@@ -25,7 +25,8 @@
         "copyLink": "Copy Public Link",
         "linkCopied": "Link copied to clipboard",
         "copiedToWhatsapp": "Formatted for WhatsApp & copied!",
-        "transactions": "Transactions"
+        "transactions": "Transactions",
+        "more": "More"
     },
     "filter": {
         "visibility": "Visibility",
