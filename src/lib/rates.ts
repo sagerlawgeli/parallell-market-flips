@@ -31,7 +31,7 @@ export async function getCryptoPrice(): Promise<number> {
 
 export async function getForexRate(from: string, to: string): Promise<number> {
     try {
-        const proxyUrl = 'https://corsproxy.io/?'
+        const proxyUrl = 'https://api.allorigins.win/raw?url='
         const targetUrl = `https://api.frankfurter.app/latest?from=${from}&to=${to}`
         const response = await fetch(proxyUrl + encodeURIComponent(targetUrl))
         const data = await response.json()
