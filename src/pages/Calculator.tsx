@@ -21,10 +21,10 @@ export default function CalculatorPage() {
         (localStorage.getItem('calc_targetMode') as "USDT" | "FIAT") || "FIAT"
     )
 
-    // Inputs - Transient (No persistence)
-    const [amount, setAmount] = useState<string>("")
-    const [fiatBuyRate, setFiatBuyRate] = useState<string>("")
-    const [usdtSellRate, setUsdtSellRate] = useState<string>("")
+    // Inputs - Restored Persistence
+    const [amount, setAmount] = useState<string>(() => localStorage.getItem('calc_amount') || "")
+    const [fiatBuyRate, setFiatBuyRate] = useState<string>(() => localStorage.getItem('calc_fiatBuyRate') || "")
+    const [usdtSellRate, setUsdtSellRate] = useState<string>(() => localStorage.getItem('calc_usdtSellRate') || "")
 
     // Split Rates - Transient (Fetched automatically)
     const [forexRate, setForexRate] = useState<string>("1.19")
@@ -39,8 +39,8 @@ export default function CalculatorPage() {
         (localStorage.getItem('calc_paymentMethod') as "cash" | "bank") || "cash"
     )
     const [isHybrid, setIsHybrid] = useState(() => localStorage.getItem('calc_isHybrid') === 'true')
-    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>("")
-    const [notes, setNotes] = useState<string>("")
+    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>(() => localStorage.getItem('calc_usdtSellRateBank') || "")
+    const [notes, setNotes] = useState<string>(() => localStorage.getItem('calc_notes') || "")
     const [isPrivate, setIsPrivate] = useState<boolean>(() => {
         const stored = localStorage.getItem('calc_isPrivate')
         return stored ? stored === 'true' : true
@@ -61,18 +61,24 @@ export default function CalculatorPage() {
         totalFees: 0 // Estimated total fees in LYD equivalent
     })
 
-    // Persistence Effect - Only Preferences
+    // Persistence Effect
     useEffect(() => {
         localStorage.setItem('calc_currency', currency)
         localStorage.setItem('calc_targetMode', targetMode)
+        localStorage.setItem('calc_amount', amount)
+        localStorage.setItem('calc_fiatBuyRate', fiatBuyRate)
+        localStorage.setItem('calc_usdtSellRate', usdtSellRate)
         localStorage.setItem('calc_revolutFee', revolutFee)
         localStorage.setItem('calc_krakenFee', krakenFee)
         localStorage.setItem('calc_paymentMethod', paymentMethod)
         localStorage.setItem('calc_isHybrid', String(isHybrid))
+        localStorage.setItem('calc_usdtSellRateBank', usdtSellRateBank)
+        localStorage.setItem('calc_notes', notes)
         localStorage.setItem('calc_isPrivate', String(isPrivate))
     }, [
-        currency, targetMode, revolutFee, krakenFee,
-        paymentMethod, isHybrid, isPrivate
+        currency, targetMode, amount, fiatBuyRate, usdtSellRate,
+        revolutFee, krakenFee, paymentMethod, isHybrid,
+        usdtSellRateBank, notes, isPrivate
     ])
 
     // Auto-fetch rates when currency changes or on mount
@@ -285,7 +291,10 @@ export default function CalculatorPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setCurrency(c => c === "GBP" ? "EUR" : "GBP")}
+                                onClick={() => {
+                                    setCurrency(c => c === "GBP" ? "EUR" : "GBP")
+                                    setFiatBuyRate("") // Clear buy rate on currency switch
+                                }}
                                 className="w-20 rounded-xl"
                             >
                                 {currency} <RefreshCw className="ml-2 h-3 w-3" />
