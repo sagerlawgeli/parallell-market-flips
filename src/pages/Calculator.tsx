@@ -13,7 +13,7 @@ import { useUserRole } from "../hooks/useUserRole"
 export default function CalculatorPage() {
     const { t } = useTranslation()
     const { isAdmin } = useUserRole()
-    // State initialization with localStorage fallback
+    // State initialization
     const [currency, setCurrency] = useState<"GBP" | "EUR">(() =>
         (localStorage.getItem('calc_currency') as "GBP" | "EUR") || "GBP"
     )
@@ -21,16 +21,16 @@ export default function CalculatorPage() {
         (localStorage.getItem('calc_targetMode') as "USDT" | "FIAT") || "FIAT"
     )
 
-    // Inputs
-    const [amount, setAmount] = useState<string>(() => localStorage.getItem('calc_amount') || "")
-    const [fiatBuyRate, setFiatBuyRate] = useState<string>(() => localStorage.getItem('calc_fiatBuyRate') || "")
-    const [usdtSellRate, setUsdtSellRate] = useState<string>(() => localStorage.getItem('calc_usdtSellRate') || "")
+    // Inputs - Transient (No persistence)
+    const [amount, setAmount] = useState<string>("")
+    const [fiatBuyRate, setFiatBuyRate] = useState<string>("")
+    const [usdtSellRate, setUsdtSellRate] = useState<string>("")
 
-    // Split Rates
-    const [forexRate, setForexRate] = useState<string>(() => localStorage.getItem('calc_forexRate') || "1.19")
-    const [cryptoRate, setCryptoRate] = useState<string>(() => localStorage.getItem('calc_cryptoRate') || "1.05")
+    // Split Rates - Transient (Fetched automatically)
+    const [forexRate, setForexRate] = useState<string>("1.19")
+    const [cryptoRate, setCryptoRate] = useState<string>("1.05")
 
-    // Fees
+    // Fees - Persistent Preferences
     const [revolutFee, setRevolutFee] = useState<string>(() => localStorage.getItem('calc_revolutFee') || "0.5")
     const [krakenFee, setKrakenFee] = useState<string>(() => localStorage.getItem('calc_krakenFee') || "0.26")
 
@@ -39,8 +39,8 @@ export default function CalculatorPage() {
         (localStorage.getItem('calc_paymentMethod') as "cash" | "bank") || "cash"
     )
     const [isHybrid, setIsHybrid] = useState(() => localStorage.getItem('calc_isHybrid') === 'true')
-    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>(() => localStorage.getItem('calc_usdtSellRateBank') || "")
-    const [notes, setNotes] = useState<string>(() => localStorage.getItem('calc_notes') || "")
+    const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>("")
+    const [notes, setNotes] = useState<string>("")
     const [isPrivate, setIsPrivate] = useState<boolean>(() => {
         const stored = localStorage.getItem('calc_isPrivate')
         return stored ? stored === 'true' : true
@@ -61,27 +61,24 @@ export default function CalculatorPage() {
         totalFees: 0 // Estimated total fees in LYD equivalent
     })
 
-    // Persistence Effect
+    // Persistence Effect - Only Preferences
     useEffect(() => {
         localStorage.setItem('calc_currency', currency)
         localStorage.setItem('calc_targetMode', targetMode)
-        localStorage.setItem('calc_amount', amount)
-        localStorage.setItem('calc_fiatBuyRate', fiatBuyRate)
-        localStorage.setItem('calc_usdtSellRate', usdtSellRate)
-        localStorage.setItem('calc_forexRate', forexRate)
-        localStorage.setItem('calc_cryptoRate', cryptoRate)
         localStorage.setItem('calc_revolutFee', revolutFee)
         localStorage.setItem('calc_krakenFee', krakenFee)
         localStorage.setItem('calc_paymentMethod', paymentMethod)
         localStorage.setItem('calc_isHybrid', String(isHybrid))
-        localStorage.setItem('calc_usdtSellRateBank', usdtSellRateBank)
-        localStorage.setItem('calc_notes', notes)
         localStorage.setItem('calc_isPrivate', String(isPrivate))
     }, [
-        currency, targetMode, amount, fiatBuyRate, usdtSellRate,
-        forexRate, cryptoRate, revolutFee, krakenFee,
-        paymentMethod, isHybrid, usdtSellRateBank, notes, isPrivate
+        currency, targetMode, revolutFee, krakenFee,
+        paymentMethod, isHybrid, isPrivate
     ])
+
+    // Auto-fetch rates when currency changes or on mount
+    useEffect(() => {
+        handleFetchRates()
+    }, [currency])
 
     useEffect(() => {
         calculate()
