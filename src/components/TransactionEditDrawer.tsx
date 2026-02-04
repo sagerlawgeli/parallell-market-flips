@@ -599,6 +599,24 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     </div>
                 )}
 
+                {/* Cost & Return Breakdown */}
+                <div className="bg-muted/30 rounded-2xl p-4 border border-border/50 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Cost:</span>
+                        <div className="flex flex-col items-end">
+                            <span className="font-mono font-medium">{formatCurrency(valFiatAmount * valFiatRate, 'LYD')}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground/50">{valFiatAmount.toFixed(2)} USDT</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Return:</span>
+                        <div className="flex flex-col items-end">
+                            <span className="font-mono font-medium">{formatCurrency(valUsdtAmount * valUsdtRate, 'LYD')}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground/50">{valUsdtAmount.toFixed(2)} USDT</span>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Profit Preview */}
                 <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
                     <div className="flex items-center justify-between mb-2">
@@ -625,6 +643,12 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                                 parseFloat(manualProfit) >= 0 ? "text-green-500" : "text-red-500"
                             )}
                         />
+                        <div className={cn(
+                            "text-[10px] font-mono text-right mt-1",
+                            parseFloat(manualProfit) >= 0 ? "text-green-500/60" : "text-red-500/60"
+                        )}>
+                            {((valUsdtAmount * valUsdtRate - valFiatAmount * valFiatRate) / (valUsdtRate || 1)).toFixed(2)} USDT
+                        </div>
                         <div className="absolute left-0 bottom-0 text-[10px] text-muted-foreground italic">
                             {Math.abs(parseFloat(manualProfit) - calculatedProfit) > 0.01 ? "Manual override" : "Calculated"}
                         </div>
