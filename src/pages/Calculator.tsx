@@ -635,8 +635,8 @@ export default function CalculatorPage() {
                                 <div className={`text-2xl font-bold ${results.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                     {formatCurrency(results.profit, 'LYD')}
                                 </div>
-                                <div className={`text-xs font-mono ${results.profit >= 0 ? 'text-green-500/60' : 'text-red-500/60'}`}>
-                                    {((results.revenue - results.cost) / (parseFloat(usdtSellRate) || 1)).toFixed(2)} USDT
+                                <div className={`text-xs font-mono shrink-0 ${results.profit >= 0 ? 'text-green-500/60' : 'text-red-500/60'}`}>
+                                    {results.surplusUsdt.toFixed(2)} USDT
                                 </div>
                                 <div className={`text-xs ${results.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                     {results.profitMargin.toFixed(2)}% {t('calculator.margin')}

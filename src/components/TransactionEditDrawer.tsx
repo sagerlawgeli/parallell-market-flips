@@ -663,7 +663,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                             "text-[10px] font-mono text-right mt-1",
                             parseFloat(manualProfit) >= 0 ? "text-green-500/60" : "text-red-500/60"
                         )}>
-                            {((valUsdtAmount * valUsdtRate - valFiatAmount * valFiatRate) / (valUsdtRate || 1)).toFixed(2)} USDT
+                            {metrics.surplusUsdt.toFixed(2)} USDT
                         </div>
                         <div className="absolute left-0 bottom-0 text-[10px] text-muted-foreground italic">
                             {Math.abs(parseFloat(manualProfit) - calculatedProfit) > 0.01 ? "Manual override" : "Calculated"}

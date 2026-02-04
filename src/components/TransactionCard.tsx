@@ -329,7 +329,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
     }
 
     const potentialCashProfit = transaction.isHybrid
-        ? (transaction.usdtAmount * transaction.usdtRate) - (transaction.fiatAmount * transaction.fiatRate)
+        ? (metrics.surplusUsdt * (transaction.usdtRate || 0))
         : null
 
     return (
@@ -630,15 +630,15 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                         <div className="text-xs text-muted-foreground mb-0.5">{t('transaction.netProfit')}</div>
                                         <div className={cn(
                                             "text-md font-bold break-words",
-                                            transaction.profit >= 0 ? "text-green-500" : "text-red-500"
+                                            metrics.profitLyd >= 0 ? "text-green-500" : "text-red-500"
                                         )}>
-                                            {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
+                                            {metrics.profitLyd > 0 ? "+" : ""}{formatCurrency(metrics.profitLyd, 'LYD')}
                                         </div>
                                         <div className={cn(
                                             "text-[10px] font-mono mt-0.5",
-                                            transaction.profit >= 0 ? "text-green-500/60" : "text-red-500/60"
+                                            metrics.profitLyd >= 0 ? "text-green-500/60" : "text-red-500/60"
                                         )}>
-                                            {transaction.profit > 0 ? "+" : ""}{((transaction.usdtAmount * transaction.usdtRate - transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate).toFixed(2)} USDT
+                                            {metrics.profitLyd > 0 ? "+" : ""}{metrics.surplusUsdt.toFixed(2)} USDT
                                         </div>
                                         {transaction.isHybrid && potentialCashProfit !== null && (
                                             <div className="flex items-center justify-end gap-1.5 mt-0.5">
@@ -646,7 +646,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                                     {potentialCashProfit > 0 ? "+" : ""}{formatCurrency(potentialCashProfit, 'LYD')}
                                                 </div>
                                                 <div className="text-[10px] text-primary/80 font-bold bg-primary/10 px-1 rounded-sm border border-primary/20">
-                                                    +{formatCurrency(transaction.profit - potentialCashProfit, 'LYD')}
+                                                    +{formatCurrency(metrics.profitLyd - (potentialCashProfit || 0), 'LYD')}
                                                 </div>
                                             </div>
                                         )}

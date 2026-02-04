@@ -14,6 +14,7 @@ import { DateRangeFilter } from "../components/DateRangeFilter"
 import { StatusFilter } from "../components/StatusFilter"
 import { useUserRole } from "../hooks/useUserRole"
 import { useFilters } from "../contexts/FilterContext"
+import { calculateTransactionMetrics } from "../lib/calculations"
 
 export default function DashboardPage() {
     const { t } = useTranslation()
@@ -126,33 +127,42 @@ export default function DashboardPage() {
                 return
             }
 
-            const totalRetainedUSDT = data.reduce((sum, t) => sum + (parseFloat(t.retained_surplus) || 0), 0)
+            const processedData = data.map(t => {
+                const metrics = calculateTransactionMetrics({
+                    fiatAmount: t.fiat_amount,
+                    fiatRate: t.fiat_buy_rate,
+                    usdtAmount: t.usdt_amount,
+                    usdtRate: t.usdt_sell_rate,
+                    isHybrid: t.is_hybrid,
+                    usdtSellRateBank: t.usdt_sell_rate_bank,
+                    isRetained: t.is_retained
+                });
+                return { ...t, metrics };
+            });
 
-            // Calculate Estimated Retained Profit (Fiat)
-            // If retained, surplus * (bank rate || usdt rate).
-            const estimatedRetainedProfit = data.reduce((sum, t) => {
-                if (!t.is_retained) return sum
-                const surplus = parseFloat(t.retained_surplus) || 0
-                const rate = t.usdt_sell_rate_bank || t.usdt_sell_rate
-                return sum + (surplus * rate)
-            }, 0)
+            const totalRetainedUSDT = processedData.reduce((sum, t) => sum + (t.is_retained ? t.metrics.surplusUsdt : 0), 0)
+            const estimatedRetainedProfit = processedData.reduce((sum, t) => sum + (t.is_retained ? t.metrics.profitLyd : 0), 0)
 
-            let totalProfit = data.reduce((sum, t) => sum + (t.profit || 0), 0)
+            let totalProfit = 0
+            let cashProfit = 0
+            let bankProfit = 0
 
-            if (includeRetained) {
-                totalProfit += estimatedRetainedProfit
-            }
+            processedData.forEach(t => {
+                const profitToUse = includeRetained ? t.metrics.profitLyd : t.metrics.realizedProfitLyd
+                totalProfit += profitToUse
 
-            const cashProfit = data.filter(t => t.payment_method === 'cash' && !t.is_hybrid && !t.is_retained).reduce((sum, t) => sum + (t.profit || 0), 0)
-            const bankProfit = data.filter(t => (t.payment_method === 'bank' || (t.payment_method === 'cash' && t.is_hybrid)) && !t.is_retained).reduce((sum, t) => sum + (t.profit || 0), 0)
-            const totalVolume = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
-            const totalTransactions = data.length
+                if (t.payment_method === 'cash' && !t.is_hybrid) {
+                    cashProfit += profitToUse
+                } else if (t.payment_method === 'bank' || (t.payment_method === 'cash' && t.is_hybrid)) {
+                    bankProfit += profitToUse
+                }
+            })
+
+            const totalVolume = processedData.reduce((sum, t) => sum + t.metrics.costLyd, 0)
+            const totalTransactions = processedData.length
             const avgProfit = totalTransactions > 0 ? totalProfit / totalTransactions : 0
 
-            const totalCost = data.reduce((sum, t) => sum + (t.fiat_amount * t.fiat_buy_rate), 0)
-            // Margin including retained? Probably complex. 
-            // If includeRetained, TotalRevenue = (Realized Profit + Cost) + (Retained Profit).
-            // Margin = TotalProfit / TotalCost.
+            const totalCost = processedData.reduce((sum, t) => sum + t.metrics.costLyd, 0)
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0
 
             // Volume metrics
@@ -216,14 +226,15 @@ export default function DashboardPage() {
             })
 
             const monthlyData: { [key: string]: number } = {}
-            data.forEach(t => {
+            processedData.forEach(t => {
                 const date = new Date(t.created_at)
                 const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
                 if (!monthlyData[monthKey]) {
                     monthlyData[monthKey] = 0
                 }
-                monthlyData[monthKey] += t.profit || 0
+                const profitToUse = includeRetained ? t.metrics.profitLyd : t.metrics.realizedProfitLyd
+                monthlyData[monthKey] += profitToUse
             })
 
             const chartData = Object.entries(monthlyData).map(([key, profit]) => {
