@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { formatCurrency, cn, getDisplayId } from "../lib/utils"
-import { ChevronDown, Wallet, User, TrendingUp, RefreshCw } from "lucide-react"
+import { ChevronDown, Wallet, User, TrendingUp, RefreshCw, Building2 } from "lucide-react"
 import { format } from "date-fns"
 import { TransactionEditDrawer } from "../components/TransactionEditDrawer"
 import type { Transaction } from "../components/TransactionCard"
@@ -124,7 +124,8 @@ export default function HoldersSummaryPage() {
                         isHybrid: tx.is_hybrid,
                         usdtSellRateBank: tx.usdt_sell_rate_bank,
                         isRetained: tx.is_retained,
-                        retainedSurplus: tx.retained_surplus
+                        retainedSurplus: tx.retained_surplus,
+                        retainedCurrency: tx.retained_currency
                     })
                 }
             })
@@ -363,6 +364,12 @@ export default function HoldersSummaryPage() {
                                                                                     <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400 text-[9px] font-bold uppercase tracking-wider">
                                                                                         <RefreshCw className="h-2 w-2" />
                                                                                         {t('transaction.hybrid')}
+                                                                                    </span>
+                                                                                )}
+                                                                                {tx.isRetained && (
+                                                                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider">
+                                                                                        <Building2 className="h-2 w-2" />
+                                                                                        {t('calculator.retainedAs', { currency: tx.retainedCurrency || 'USDT' })}
                                                                                     </span>
                                                                                 )}
                                                                             </div>

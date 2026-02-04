@@ -103,7 +103,8 @@ export default function TransactionListPage() {
                 isHybrid: txn.is_hybrid,
                 usdtSellRateBank: txn.usdt_sell_rate_bank,
                 isRetained: txn.is_retained,
-                retainedSurplus: txn.retained_surplus
+                retainedSurplus: txn.retained_surplus,
+                retainedCurrency: txn.retained_currency
             }))
 
             setTransactions(formattedTransactions)

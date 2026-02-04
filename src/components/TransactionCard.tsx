@@ -37,6 +37,7 @@ import { supabase } from "../lib/supabase"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { useUserRole } from "../hooks/useUserRole"
+import { calculateTransactionMetrics } from "../lib/calculations"
 
 export type TransactionStatus = 'planned' | 'in_progress' | 'complete' | 'cancelled'
 
@@ -67,6 +68,7 @@ export interface Transaction {
     usdtSellRateBank?: number
     isRetained?: boolean
     retainedSurplus?: number
+    retainedCurrency?: 'USDT' | 'EUR' | 'GBP'
 }
 
 interface TransactionCardProps {
@@ -78,6 +80,16 @@ interface TransactionCardProps {
 export function TransactionCard({ transaction, onStatusChange, readOnly = false }: TransactionCardProps) {
     const { t, i18n } = useTranslation()
     const { isAdmin } = useUserRole()
+
+    const metrics = calculateTransactionMetrics({
+        fiatAmount: transaction.fiatAmount,
+        fiatRate: transaction.fiatRate,
+        usdtAmount: transaction.usdtAmount,
+        usdtRate: transaction.usdtRate,
+        isHybrid: transaction.isHybrid,
+        usdtSellRateBank: transaction.usdtSellRateBank,
+        isRetained: transaction.isRetained
+    });
 
     const statusConfig = {
         planned: {
@@ -365,7 +377,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                                     {transaction.isRetained && (
                                                         <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider">
                                                             <Building2 className="h-2 w-2" />
-                                                            {t('calculator.retained') || "RETAINED"}
+                                                            {t('calculator.retainedAs', { currency: transaction.retainedCurrency || 'USDT' })}
                                                         </span>
                                                     )}
                                                 </div>
@@ -471,13 +483,13 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             <div className="flex flex-col">
                                                 <span>{t('calculator.usdtToCover')}</span>
                                                 <span className="font-mono font-bold text-foreground">
-                                                    {((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate).toFixed(1)} USDT
+                                                    {metrics.usdtToCoverCost.toFixed(1)} USDT
                                                 </span>
                                             </div>
                                             <div className="flex flex-col text-right">
                                                 <span>{t('calculator.usdtSurplus')}</span>
                                                 <span className="font-mono font-bold text-primary">
-                                                    {(transaction.usdtAmount - ((transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate)).toFixed(1)} USDT
+                                                    {metrics.surplusUsdt.toFixed(1)} USDT
                                                 </span>
                                             </div>
                                         </div>
@@ -535,8 +547,8 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             <span>{t('calculator.cost')}:</span>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.fiatAmount * transaction.fiatRate, 'LYD')}</span>
-                                            <span className="font-mono text-[10px] text-muted-foreground/50">{transaction.fiatAmount.toFixed(2)} USDT</span>
+                                            <span className="font-mono font-medium text-foreground/80">{formatCurrency(metrics.costLyd, 'LYD')}</span>
+                                            <span className="font-mono text-[10px] text-muted-foreground/50">{metrics.usdtToCoverCost.toFixed(2)} USDT</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between text-muted-foreground/80">
@@ -547,8 +559,8 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             <span>{t('calculator.return')}:</span>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.usdtAmount * transaction.usdtRate, 'LYD')}</span>
-                                            <span className="font-mono text-[10px] text-muted-foreground/50">{transaction.usdtAmount.toFixed(2)} USDT</span>
+                                            <span className="font-mono font-medium text-foreground/80">{formatCurrency(metrics.returnLyd, 'LYD')}</span>
+                                            <span className="font-mono text-[10px] text-muted-foreground/50">{metrics.returnUsdt.toFixed(2)} USDT</span>
                                         </div>
                                     </div>
                                 </div>
@@ -609,7 +621,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                         {transaction.isRetained && (
                                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider">
                                                 <Building2 className="h-3 w-3" />
-                                                <span className="text-xs font-bold uppercase tracking-tighter">{t('calculator.retained') || "RETAINED"}</span>
+                                                <span className="text-xs font-bold uppercase tracking-tighter">{t('calculator.retainedAs', { currency: transaction.retainedCurrency || 'USDT' })}</span>
                                             </div>
                                         )}
                                     </div>

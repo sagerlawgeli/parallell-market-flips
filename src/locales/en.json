@@ -88,7 +88,8 @@
         "notesPlaceholder": "Add notes...",
         "hybrid": "Hybrid",
         "hybridFull": "Hybrid Transaction",
-        "hybridDesc": "Cover cost in cash, sell surplus via bank",
+        "hybridDesc": "Choose how to handle the remaining USDT surplus",
+        "hybridDescShort": "Sell surplus at a different rate",
         "bankProfitRate": "Bank Profit Rate",
         "usdtToCover": "USDT to cover cost",
         "usdtSurplus": "USDT for profit (Surplus)",
@@ -98,10 +99,14 @@
         "resulting": "Resulting",
         "afterFees": "(after fees)",
         "margin": "margin",
+        "hybridMode": "Hybrid Transaction",
         "retainSurplus": "Retain Surplus",
-        "retainDesc": "Keep surplus USDT as investment instead of converting to cash",
+        "retainDesc": "Hold surplus offshore instead of selling",
         "retainedAmount": "Retained Amount",
-        "retained": "RETAINED"
+        "retainedCurrency": "Retained Currency",
+        "retainFull": "Use Surplus",
+        "retained": "RETAINED",
+        "retainedAs": "Retained as {{currency}}"
     },
     "analytics": {
         "title": "Analytics",

@@ -9,6 +9,7 @@ import { formatCurrency, cn } from "../lib/utils"
 import { supabase } from "../lib/supabase"
 import { useTranslation } from "react-i18next"
 import { useUserRole } from "../hooks/useUserRole"
+import { calculateTransactionMetrics } from "../lib/calculations"
 
 export default function CalculatorPage() {
     const { t } = useTranslation()
@@ -39,6 +40,10 @@ export default function CalculatorPage() {
         (localStorage.getItem('calc_paymentMethod') as "cash" | "bank") || "cash"
     )
     const [isHybrid, setIsHybrid] = useState(() => localStorage.getItem('calc_isHybrid') === 'true')
+    const [isRetained, setIsRetained] = useState(() => localStorage.getItem('calc_isRetained') === 'true')
+    const [retainedCurrency, setRetainedCurrency] = useState<'USDT' | 'EUR' | 'GBP'>(() =>
+        (localStorage.getItem('calc_retainedCurrency') as 'USDT' | 'EUR' | 'GBP') || 'USDT'
+    )
     const [usdtSellRateBank, setUsdtSellRateBank] = useState<string>(() => localStorage.getItem('calc_usdtSellRateBank') || "")
     const [notes, setNotes] = useState<string>(() => localStorage.getItem('calc_notes') || "")
     const [isPrivate, setIsPrivate] = useState<boolean>(() => {
@@ -56,9 +61,12 @@ export default function CalculatorPage() {
         profit: 0,
         profitMargin: 0,
         fiatAmount: 0,
-        eurAmount: 0, // Intermediate EUR amount
+        eurAmount: 0,
         usdtAmount: 0,
-        totalFees: 0 // Estimated total fees in LYD equivalent
+        totalFees: 0,
+        usdtToCoverCost: 0,
+        surplusUsdt: 0,
+        returnUsdt: 0
     })
 
     // Persistence Effect
@@ -72,12 +80,14 @@ export default function CalculatorPage() {
         localStorage.setItem('calc_krakenFee', krakenFee)
         localStorage.setItem('calc_paymentMethod', paymentMethod)
         localStorage.setItem('calc_isHybrid', String(isHybrid))
+        localStorage.setItem('calc_isRetained', String(isRetained))
+        localStorage.setItem('calc_retainedCurrency', retainedCurrency)
         localStorage.setItem('calc_usdtSellRateBank', usdtSellRateBank)
         localStorage.setItem('calc_notes', notes)
         localStorage.setItem('calc_isPrivate', String(isPrivate))
     }, [
         currency, targetMode, amount, fiatBuyRate, usdtSellRate,
-        revolutFee, krakenFee, paymentMethod, isHybrid,
+        revolutFee, krakenFee, paymentMethod, isHybrid, isRetained, retainedCurrency,
         usdtSellRateBank, notes, isPrivate
     ])
 
@@ -186,31 +196,28 @@ export default function CalculatorPage() {
         }
 
 
-        const cost = calcFiatAmount * valFiatBuyRate
-        const revenue = calcUsdtAmount * valUsdtSellRate
-
-        let profit = revenue - cost
-        let profitMargin = cost > 0 ? (profit / cost) * 100 : 0
-
-        if (isHybrid && paymentMethod === 'cash') {
-            const valUsdtSellRateBank = parseFloat(usdtSellRateBank) || valUsdtSellRate
-            // USDT needed to cover cost at cash rate
-            const usdtToCoverCost = valUsdtSellRate > 0 ? cost / valUsdtSellRate : 0
-            const surplusUsdt = Math.max(0, calcUsdtAmount - usdtToCoverCost)
-            // Profit is exclusively realized at the bank rate on the surplus
-            profit = surplusUsdt * valUsdtSellRateBank
-            profitMargin = cost > 0 ? (profit / cost) * 100 : 0
-        }
+        const metrics = calculateTransactionMetrics({
+            fiatAmount: calcFiatAmount,
+            fiatRate: valFiatBuyRate,
+            usdtAmount: calcUsdtAmount,
+            usdtRate: valUsdtSellRate,
+            isHybrid: isHybrid && paymentMethod === 'cash',
+            usdtSellRateBank: parseFloat(usdtSellRateBank),
+            isRetained: isRetained
+        });
 
         setResults({
-            cost,
-            revenue,
-            profit,
-            profitMargin,
+            cost: metrics.costLyd,
+            revenue: metrics.returnLyd,
+            profit: metrics.profitLyd,
+            profitMargin: metrics.costLyd > 0 ? (metrics.profitLyd / metrics.costLyd) * 100 : 0,
             fiatAmount: calcFiatAmount,
             eurAmount: calcEurAmount,
             usdtAmount: calcUsdtAmount,
-            totalFees: totalFeesInLYD
+            totalFees: totalFeesInLYD,
+            usdtToCoverCost: metrics.usdtToCoverCost,
+            surplusUsdt: metrics.surplusUsdt,
+            returnUsdt: metrics.returnUsdt
         })
     }
 
@@ -243,8 +250,11 @@ export default function CalculatorPage() {
                 payment_method: paymentMethod,
                 is_hybrid: isHybrid && paymentMethod === 'cash',
                 usdt_sell_rate_bank: (isHybrid && paymentMethod === 'cash') ? (parseFloat(usdtSellRateBank) || 0) : null,
+                is_retained: isRetained,
+                retained_surplus: isRetained ? results.surplusUsdt : null,
+                retained_currency: isRetained ? retainedCurrency : null,
                 profit: results.profit,
-                notes: notes || `Profit: ${results.profit.toFixed(2)} LYD`,
+                notes: notes,
                 is_private: isPrivate
             })
 
@@ -357,63 +367,139 @@ export default function CalculatorPage() {
                             </div>
                         </div>
 
-                        {paymentMethod === 'cash' && (
-                            <div className="pt-2">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="space-y-0.5">
-                                        <label className="text-sm font-medium">{t('calculator.hybridFull')}</label>
-                                        <p className="text-xs text-muted-foreground">{t('calculator.hybridDesc')}</p>
+                        {/* Cost Recovery & Outcome Strategy */}
+                        {paymentMethod && (
+                            <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 mb-4 space-y-4">
+                                {/* Cost Breakdown Summary */}
+                                <div className="space-y-1.5 pb-2 border-b border-primary/10">
+                                    <div className="flex justify-between text-[11px] text-muted-foreground">
+                                        <span>{t('calculator.usdtToCover') || "USDT to cover cost"}:</span>
+                                        <span className="font-mono font-bold text-foreground">
+                                            {results.usdtToCoverCost.toFixed(2)} USDT
+                                        </span>
                                     </div>
-                                    <button
-                                        onClick={() => setIsHybrid(!isHybrid)}
-                                        className={cn(
-                                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                                            isHybrid ? "bg-purple-500" : "bg-muted"
-                                        )}
-                                    >
-                                        <span
-                                            className={cn(
-                                                "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                                                isHybrid ? "translate-x-6" : "translate-x-1"
-                                            )}
-                                        />
-                                    </button>
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-muted-foreground">{t('calculator.usdtSurplus') || "USDT for profit (Surplus)"}:</span>
+                                        <span className="text-primary font-bold">
+                                            {results.surplusUsdt.toFixed(2)} USDT
+                                        </span>
+                                    </div>
                                 </div>
-                                {isHybrid && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        className="space-y-3"
-                                    >
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-muted-foreground">
-                                                {t('calculator.bankProfitRate')} (LYD / USDT)
-                                            </label>
+
+                                {/* Option 1: Hybrid Transaction */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <h3 className="font-semibold text-sm">{t('calculator.hybridMode') || "Hybrid Transaction"}</h3>
+                                            <p className="text-[10px] text-muted-foreground italic">
+                                                {t('calculator.hybridDescShort') || "Sell surplus at a different rate"}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setIsHybrid(!isHybrid);
+                                                setIsRetained(false);
+                                            }}
+                                            className={cn(
+                                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                                isHybrid ? "bg-primary" : "bg-muted"
+                                            )}
+                                        >
+                                            <span
+                                                className={cn(
+                                                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                                    isHybrid ? "translate-x-6" : "translate-x-1"
+                                                )}
+                                            />
+                                        </button>
+                                    </div>
+                                    {isHybrid && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            className="pt-1"
+                                        >
+                                            <label className="block text-xs text-muted-foreground mb-1">{t('calculator.bankProfitRate')} (LYD / USDT)</label>
                                             <Input
                                                 type="number"
-                                                placeholder="6.50"
                                                 value={usdtSellRateBank}
                                                 onChange={(e) => setUsdtSellRateBank(e.target.value)}
-                                                className="h-11 rounded-xl border-primary/20 bg-primary/5"
+                                                className="h-11 text-base border-primary/20 bg-background"
                                             />
-                                        </div>
+                                        </motion.div>
+                                    )}
+                                </div>
 
-                                        <div className="bg-muted/30 rounded-xl p-3 space-y-2 border border-border/50">
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-muted-foreground">{t('calculator.usdtToCover')}:</span>
-                                                <span className="font-mono font-bold">{(results.cost / (parseFloat(usdtSellRate) || 1)).toFixed(2)} USDT</span>
-                                            </div>
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-muted-foreground">{t('calculator.usdtSurplus')}:</span>
-                                                <span className="font-mono font-bold text-primary">{Math.max(0, results.usdtAmount - (results.cost / (parseFloat(usdtSellRate) || 1))).toFixed(2)} USDT</span>
-                                            </div>
-                                            <div className="pt-1 mt-1 border-t border-border/50 flex justify-between text-[10px] uppercase tracking-wider font-bold">
-                                                <span className="text-muted-foreground">{t('calculator.surplusToBank')}:</span>
-                                                <span className="text-primary">{formatCurrency(results.profit, 'LYD')}</span>
-                                            </div>
+                                {/* Option 2: Retain Surplus */}
+                                <div className="space-y-3 pt-2 border-t border-primary/10">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <h3 className="font-semibold text-sm text-blue-600 dark:text-blue-400">
+                                                {isRetained
+                                                    ? t('calculator.retainedAs', { currency: retainedCurrency })
+                                                    : (t('calculator.retainSurplus') || "Retain Surplus")}
+                                            </h3>
+                                            <p className="text-[10px] text-muted-foreground italic">
+                                                {t('calculator.retainDesc') || "Hold surplus offshore instead of selling"}
+                                            </p>
                                         </div>
-                                    </motion.div>
-                                )}
+                                        <button
+                                            onClick={() => {
+                                                setIsRetained(!isRetained);
+                                                setIsHybrid(false);
+                                            }}
+                                            className={cn(
+                                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                                isRetained ? "bg-blue-500" : "bg-muted"
+                                            )}
+                                        >
+                                            <span
+                                                className={cn(
+                                                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                                    isRetained ? "translate-x-6" : "translate-x-1"
+                                                )}
+                                            />
+                                        </button>
+                                    </div>
+                                    {isRetained && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            className="space-y-3 pt-1"
+                                        >
+                                            <div className="relative">
+                                                <Input
+                                                    type="number"
+                                                    readOnly
+                                                    value={results.surplusUsdt.toFixed(2)}
+                                                    className="h-11 text-right font-mono font-bold text-blue-600 bg-blue-50/50 border-blue-200"
+                                                />
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-blue-400 font-medium">USDT Amount</span>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs text-muted-foreground mb-2">{t('calculator.retainedCurrency') || "Retained Currency"}</label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {(['USDT', 'EUR', 'GBP'] as const).map((currency) => (
+                                                        <button
+                                                            key={currency}
+                                                            type="button"
+                                                            onClick={() => setRetainedCurrency(currency)}
+                                                            className={cn(
+                                                                "h-10 rounded-lg text-xs font-bold transition-all border-2",
+                                                                retainedCurrency === currency
+                                                                    ? "bg-blue-500 text-white border-blue-500"
+                                                                    : "bg-background text-muted-foreground border-border hover:border-blue-300"
+                                                            )}
+                                                        >
+                                                            {currency}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -530,14 +616,14 @@ export default function CalculatorPage() {
                             <span className="text-muted-foreground">{t('calculator.cost')} (LYD)</span>
                             <div className="flex flex-col items-end">
                                 <span className="font-mono font-medium">{formatCurrency(results.cost, 'LYD')}</span>
-                                <span className="font-mono text-[10px] text-muted-foreground/50">{results.fiatAmount.toFixed(2)} USDT</span>
+                                <span className="font-mono text-[10px] text-muted-foreground/50">{results.usdtToCoverCost.toFixed(2)} USDT</span>
                             </div>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{t('calculator.return')} (LYD)</span>
                             <div className="flex flex-col items-end">
                                 <span className="font-mono font-medium">{formatCurrency(results.revenue, 'LYD')}</span>
-                                <span className="font-mono text-[10px] text-muted-foreground/50">{results.usdtAmount.toFixed(2)} USDT</span>
+                                <span className="font-mono text-[10px] text-muted-foreground/50">{results.returnUsdt.toFixed(2)} USDT</span>
                             </div>
                         </div>
 

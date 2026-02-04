@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 import { useUserRole } from "../hooks/useUserRole"
 import type { Transaction } from "./TransactionCard"
+import { calculateTransactionMetrics } from "../lib/calculations"
 
 interface TransactionEditDrawerProps {
     transaction: Transaction | null
@@ -61,48 +62,40 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
         usdtSellRateBank: "",
         isRetained: false,
         retainedSurplus: "",
+        retainedCurrency: "USDT" as 'USDT' | 'EUR' | 'GBP',
         status: "planned" as 'planned' | 'in_progress' | 'complete' | 'cancelled'
     })
     const [manualProfit, setManualProfit] = useState<string>("")
     const [retainedManual, setRetainedManual] = useState(false)
 
-    // Calculate live profit preview
+    // Parse live values
     const valFiatAmount = parseFloat(editValues.fiatAmount) || 0
     const valFiatRate = parseFloat(editValues.fiatRate) || 0
     const valUsdtAmount = parseFloat(editValues.usdtAmount) || 0
     const valUsdtRate = parseFloat(editValues.usdtRate) || 0
 
-    let calculatedProfit = (valUsdtAmount * valUsdtRate) - (valFiatAmount * valFiatRate)
+    // Calculate live metrics using centralized logic
+    const metrics = calculateTransactionMetrics({
+        fiatAmount: valFiatAmount,
+        fiatRate: valFiatRate,
+        usdtAmount: valUsdtAmount,
+        usdtRate: valUsdtRate,
+        isHybrid: editValues.isHybrid,
+        usdtSellRateBank: parseFloat(editValues.usdtSellRateBank),
+        isRetained: editValues.isRetained
+    });
 
-    if (editValues.isHybrid && editValues.paymentMethod === 'cash') {
-        const valUsdtSellRateBank = parseFloat(editValues.usdtSellRateBank) || valUsdtRate
-        const cost = valFiatAmount * valFiatRate
-        const usdtToCoverCost = valUsdtRate > 0 ? cost / valUsdtRate : 0
-        const surplusUsdt = Math.max(0, valUsdtAmount - usdtToCoverCost)
-        calculatedProfit = surplusUsdt * valUsdtSellRateBank
-    }
+    const calculatedProfit = metrics.profitLyd;
 
     // Auto-calculate retained amount
     useEffect(() => {
         if (editValues.isRetained && !retainedManual) {
-            // To simplify: Cost in USDT = (Fiat * Rate) / SellRate.
-            const totalCost = valFiatAmount * valFiatRate // This is Total Cost.
-
-            // Retaining surplus means: We only convert enough USDT to cover Total Cost.
-            // Amount to Convert * SellRate = TotalCost.
-            // Amount to Convert = TotalCost / SellRate.
-            // Surplus = valUsdtAmount - Amount to Convert.
-
-            const sellRate = (editValues.isHybrid && editValues.paymentMethod === 'cash')
-                ? (parseFloat(editValues.usdtSellRateBank) || valUsdtRate)
-                : valUsdtRate
-
-            const amountToConvert = sellRate > 0 ? totalCost / sellRate : 0
-            const surplus = Math.max(0, valUsdtAmount - amountToConvert)
-
-            setEditValues(prev => prev.retainedSurplus !== surplus.toFixed(2) ? { ...prev, retainedSurplus: surplus.toFixed(2) } : prev)
+            setEditValues(prev => ({
+                ...prev,
+                retainedSurplus: metrics.surplusUsdt.toFixed(2)
+            }));
         }
-    }, [editValues.isRetained, valUsdtAmount, valUsdtRate, valFiatAmount, valFiatRate, editValues.isHybrid, editValues.usdtSellRateBank, retainedManual])
+    }, [metrics.surplusUsdt, editValues.isRetained, retainedManual])
 
     // Reset manual flag when toggle is turned off/on or transaction loaded
     useEffect(() => {
@@ -143,6 +136,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 usdtSellRateBank: transaction.usdtSellRateBank?.toString() ?? "",
                 isRetained: transaction.isRetained || false,
                 retainedSurplus: transaction.retainedSurplus?.toString() ?? "",
+                retainedCurrency: transaction.retainedCurrency || "USDT",
                 status: transaction.status || "planned"
             })
             setManualProfit(transaction.profit?.toString() ?? "")
@@ -165,6 +159,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             editValues.isHybrid !== (transaction.isHybrid || false) ||
             (parseFloat(editValues.usdtSellRateBank) || 0) !== (transaction.usdtSellRateBank || 0) ||
             editValues.isRetained !== (transaction.isRetained || false) ||
+            editValues.retainedCurrency !== (transaction.retainedCurrency || 'USDT') ||
             editValues.status !== (transaction.status || 'planned') ||
             parseFloat(manualProfit) !== transaction.profit
         )
@@ -226,8 +221,9 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            if (editValues.isRetained && !editValues.holderId) {
-                toast.error(t('transaction.holderRequiredForRetention') || "Please select a holder for retained funds")
+            // Only require holder when completing a transaction with retained funds
+            if (editValues.isRetained && !editValues.holderId && editValues.status === 'complete') {
+                toast.error(t('transaction.holderRequiredForRetention') || "Please select a holder for retained funds before completing")
                 return
             }
 
@@ -245,6 +241,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                 usdt_sell_rate_bank: (editValues.isHybrid && editValues.paymentMethod === 'cash') ? (parseFloat(editValues.usdtSellRateBank) || 0) : null,
                 is_retained: editValues.isRetained,
                 retained_surplus: editValues.isRetained ? (parseFloat(editValues.retainedSurplus) || 0) : 0,
+                retained_currency: editValues.isRetained ? editValues.retainedCurrency : null,
                 status: editValues.status,
                 updated_at: new Date().toISOString()
             }
@@ -433,121 +430,143 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     </div>
                 </div>
 
-                {/* Hybrid Toggle */}
-                {editValues.paymentMethod === 'cash' && (
-                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="space-y-0.5">
-                                <h3 className="font-semibold text-sm">{t('calculator.hybridFull')}</h3>
-                                <p className="text-[10px] text-muted-foreground italic">{t('calculator.hybridDesc')}</p>
+                {/* Cost Recovery & Outcome Strategy */}
+                {editValues.paymentMethod && (
+                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 mb-4 space-y-4">
+                        {/* Cost Breakdown Summary */}
+                        <div className="space-y-1.5 pb-2 border-b border-primary/10">
+                            <div className="flex justify-between text-[11px] text-muted-foreground">
+                                <span>{t('calculator.usdtToCover') || "USDT to cover cost"}:</span>
+                                <span className="font-mono font-bold text-foreground">
+                                    {metrics.usdtToCoverCost.toFixed(2)} USDT
+                                </span>
                             </div>
-                            <button
-                                onClick={() => setEditValues({ ...editValues, isHybrid: !editValues.isHybrid })}
-                                className={cn(
-                                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                                    editValues.isHybrid ? "bg-purple-500" : "bg-muted"
-                                )}
-                            >
-                                <span
-                                    className={cn(
-                                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                                        editValues.isHybrid ? "translate-x-6" : "translate-x-1"
-                                    )}
-                                />
-                            </button>
+                            <div className="flex justify-between text-[11px]">
+                                <span className="text-muted-foreground">{t('calculator.usdtSurplus') || "USDT for profit (Surplus)"}:</span>
+                                <span className="text-primary font-bold">
+                                    {metrics.surplusUsdt.toFixed(2)} USDT
+                                </span>
+                            </div>
                         </div>
-                        {editValues.isHybrid && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                className="space-y-3 pt-2 mt-2 border-t border-primary/10"
-                            >
-                                <div>
+
+                        {/* Option 1: Hybrid Transaction */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <h3 className="font-semibold text-sm">{t('calculator.hybridMode') || "Hybrid Transaction"}</h3>
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        {t('calculator.hybridDescShort') || "Sell surplus at a different rate"}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setEditValues({
+                                        ...editValues,
+                                        isHybrid: !editValues.isHybrid,
+                                        isRetained: false // Mutually exclusive
+                                    })}
+                                    className={cn(
+                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                        editValues.isHybrid ? "bg-primary" : "bg-muted"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                            editValues.isHybrid ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
+                                </button>
+                            </div>
+                            {editValues.isHybrid && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    className="pt-1"
+                                >
                                     <label className="block text-xs text-muted-foreground mb-1">{t('calculator.bankProfitRate')} (LYD / USDT)</label>
                                     <Input
                                         type="number"
                                         value={editValues.usdtSellRateBank}
                                         onChange={e => setEditValues({ ...editValues, usdtSellRateBank: e.target.value })}
-                                        className="h-12 text-base border-primary/20 bg-background"
+                                        className="h-11 text-base border-primary/20 bg-background"
                                     />
+                                </motion.div>
+                            )}
+                        </div>
+
+                        {/* Option 2: Retain Surplus */}
+                        <div className="space-y-3 pt-2 border-t border-primary/10">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <h3 className="font-semibold text-sm text-blue-600 dark:text-blue-400">
+                                        {editValues.isRetained
+                                            ? t('calculator.retainedAs', { currency: editValues.retainedCurrency })
+                                            : (t('calculator.retainSurplus') || "Retain Surplus")}
+                                    </h3>
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        {t('calculator.retainDesc') || "Hold surplus offshore instead of selling"}
+                                    </p>
                                 </div>
-                                <div className="space-y-1.5 pt-1">
-                                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                                        <span>{t('calculator.usdtToCover')}:</span>
-                                        <span className="font-mono font-bold">
-                                            {((parseFloat(editValues.fiatAmount) * (parseFloat(editValues.fiatRate) || 0)) / (parseFloat(editValues.usdtRate) || 1)).toFixed(2)} USDT
-                                        </span>
+                                <button
+                                    onClick={() => setEditValues({
+                                        ...editValues,
+                                        isRetained: !editValues.isRetained,
+                                        isHybrid: false // Mutually exclusive
+                                    })}
+                                    className={cn(
+                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                                        editValues.isRetained ? "bg-blue-500" : "bg-muted"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                            editValues.isRetained ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
+                                </button>
+                            </div>
+                            {editValues.isRetained && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    className="space-y-3 pt-1"
+                                >
+                                    <div className="relative">
+                                        <Input
+                                            type="number"
+                                            readOnly
+                                            value={editValues.retainedSurplus}
+                                            className="h-11 text-right font-mono font-bold text-blue-600 bg-blue-50/50 border-blue-200"
+                                        />
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-blue-400 font-medium">USDT Amount</span>
                                     </div>
-                                    <div className="flex justify-between text-[10px]">
-                                        <span className="text-muted-foreground">{t('calculator.usdtSurplus')}:</span>
-                                        <span className="text-primary font-bold">
-                                            {Math.max(0, parseFloat(editValues.usdtAmount) - ((parseFloat(editValues.fiatAmount) * (parseFloat(editValues.fiatRate) || 0)) / (parseFloat(editValues.usdtRate) || 1))).toFixed(2)} USDT
-                                        </span>
+
+                                    <div>
+                                        <label className="block text-xs text-muted-foreground mb-2">{t('calculator.retainedCurrency') || "Retained Currency"}</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {(['USDT', 'EUR', 'GBP'] as const).map((currency) => (
+                                                <button
+                                                    key={currency}
+                                                    type="button"
+                                                    onClick={() => setEditValues({ ...editValues, retainedCurrency: currency })}
+                                                    className={cn(
+                                                        "h-10 rounded-lg text-xs font-bold transition-all border-2",
+                                                        editValues.retainedCurrency === currency
+                                                            ? "bg-blue-500 text-white border-blue-500"
+                                                            : "bg-background text-muted-foreground border-border hover:border-blue-300"
+                                                    )}
+                                                >
+                                                    {currency}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
+                                </motion.div>
+                            )}
+                        </div>
                     </div>
                 )}
-
-                {/* Retention Toggle */}
-                <div className="bg-blue-500/5 rounded-2xl p-4 border border-blue-500/10 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="space-y-0.5">
-                            <h3 className="font-semibold text-sm">{t('calculator.retainSurplus') || "Retain Surplus"}</h3>
-                            <p className="text-[10px] text-muted-foreground italic">
-                                {t('calculator.retainDesc') || "Keep surplus USDT as investment instead of converting to cash"}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setEditValues({ ...editValues, isRetained: !editValues.isRetained })}
-                            className={cn(
-                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                                editValues.isRetained ? "bg-blue-500" : "bg-muted"
-                            )}
-                        >
-                            <span
-                                className={cn(
-                                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                                    editValues.isRetained ? "translate-x-6" : "translate-x-1"
-                                )}
-                            />
-                        </button>
-                    </div>
-                    {editValues.isRetained && (
-                        <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <Input
-                                    type="number"
-                                    value={editValues.retainedSurplus}
-                                    onChange={e => {
-                                        setEditValues({ ...editValues, retainedSurplus: e.target.value })
-                                        setRetainedManual(true)
-                                    }}
-                                    className="h-10 text-right font-mono font-bold text-blue-600 bg-blue-50/50 border-blue-200"
-                                />
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-blue-400 font-medium">USDT</span>
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    setEditValues({ ...editValues, retainedSurplus: editValues.usdtAmount })
-                                    setRetainedManual(true)
-                                }}
-                                className="h-10 px-3 text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700 whitespace-nowrap"
-                                title={t('calculator.retainFull') || "Retain Full Amount"}
-                            >
-                                Max
-                            </Button>
-                        </div>
-                    )}
-                    {!editValues.holderId && (
-                        <p className="text-[10px] text-red-500 mt-2">
-                            * {t('transaction.selectHolderWarning') || "Select a holder below"}
-                        </p>
-                    )}
-                </div>
 
 
                 {/* Holder */}
@@ -556,10 +575,7 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     <select
                         value={editValues.holderId}
                         onChange={(e) => setEditValues({ ...editValues, holderId: e.target.value })}
-                        className={cn(
-                            "w-full h-12 px-4 text-base border bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary",
-                            (editValues.isRetained && !editValues.holderId) ? "border-red-300 ring-1 ring-red-200" : "border-input"
-                        )}
+                        className="w-full h-12 px-4 text-base border bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary border-input"
                     >
                         <option value="">{t('transaction.selectHolder')}</option>
                         {holders.map((holder) => (
@@ -604,15 +620,15 @@ export function TransactionEditDrawer({ transaction, isOpen, onClose, onUpdate }
                     <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">Cost:</span>
                         <div className="flex flex-col items-end">
-                            <span className="font-mono font-medium">{formatCurrency(valFiatAmount * valFiatRate, 'LYD')}</span>
-                            <span className="font-mono text-[10px] text-muted-foreground/50">{valFiatAmount.toFixed(2)} USDT</span>
+                            <span className="font-mono font-medium">{formatCurrency(metrics.costLyd, 'LYD')}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground/50">{metrics.usdtToCoverCost.toFixed(2)} USDT</span>
                         </div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">Return:</span>
                         <div className="flex flex-col items-end">
-                            <span className="font-mono font-medium">{formatCurrency(valUsdtAmount * valUsdtRate, 'LYD')}</span>
-                            <span className="font-mono text-[10px] text-muted-foreground/50">{valUsdtAmount.toFixed(2)} USDT</span>
+                            <span className="font-mono font-medium">{formatCurrency(metrics.returnLyd, 'LYD')}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground/50">{metrics.returnUsdt.toFixed(2)} USDT</span>
                         </div>
                     </div>
                 </div>
