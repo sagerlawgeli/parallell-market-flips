@@ -534,7 +534,10 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             </div>
                                             <span>{t('calculator.cost')}:</span>
                                         </div>
-                                        <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.fiatAmount * transaction.fiatRate, 'LYD')}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.fiatAmount * transaction.fiatRate, 'LYD')}</span>
+                                            <span className="font-mono text-[10px] text-muted-foreground/50">{transaction.fiatAmount.toFixed(2)} USDT</span>
+                                        </div>
                                     </div>
                                     <div className="flex items-center justify-between text-muted-foreground/80">
                                         <div className="flex items-center gap-1.5">
@@ -543,7 +546,10 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             </div>
                                             <span>{t('calculator.return')}:</span>
                                         </div>
-                                        <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.usdtAmount * transaction.usdtRate, 'LYD')}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-mono font-medium text-foreground/80">{formatCurrency(transaction.usdtAmount * transaction.usdtRate, 'LYD')}</span>
+                                            <span className="font-mono text-[10px] text-muted-foreground/50">{transaction.usdtAmount.toFixed(2)} USDT</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -615,6 +621,12 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
                                             transaction.profit >= 0 ? "text-green-500" : "text-red-500"
                                         )}>
                                             {transaction.profit > 0 ? "+" : ""}{formatCurrency(transaction.profit, 'LYD')}
+                                        </div>
+                                        <div className={cn(
+                                            "text-[10px] font-mono mt-0.5",
+                                            transaction.profit >= 0 ? "text-green-500/60" : "text-red-500/60"
+                                        )}>
+                                            {transaction.profit > 0 ? "+" : ""}{((transaction.usdtAmount * transaction.usdtRate - transaction.fiatAmount * transaction.fiatRate) / transaction.usdtRate).toFixed(2)} USDT
                                         </div>
                                         {transaction.isHybrid && potentialCashProfit !== null && (
                                             <div className="flex items-center justify-end gap-1.5 mt-0.5">

@@ -528,11 +528,17 @@ export default function CalculatorPage() {
 
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{t('calculator.cost')} (LYD)</span>
-                            <span className="font-mono font-medium">{formatCurrency(results.cost, 'LYD')}</span>
+                            <div className="flex flex-col items-end">
+                                <span className="font-mono font-medium">{formatCurrency(results.cost, 'LYD')}</span>
+                                <span className="font-mono text-[10px] text-muted-foreground/50">{results.fiatAmount.toFixed(2)} USDT</span>
+                            </div>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{t('calculator.return')} (LYD)</span>
-                            <span className="font-mono font-medium">{formatCurrency(results.revenue, 'LYD')}</span>
+                            <div className="flex flex-col items-end">
+                                <span className="font-mono font-medium">{formatCurrency(results.revenue, 'LYD')}</span>
+                                <span className="font-mono text-[10px] text-muted-foreground/50">{results.usdtAmount.toFixed(2)} USDT</span>
+                            </div>
                         </div>
 
                         <div className="border-t border-border/50 my-2"></div>
@@ -542,6 +548,9 @@ export default function CalculatorPage() {
                             <div className="text-right">
                                 <div className={`text-2xl font-bold ${results.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                     {formatCurrency(results.profit, 'LYD')}
+                                </div>
+                                <div className={`text-xs font-mono ${results.profit >= 0 ? 'text-green-500/60' : 'text-red-500/60'}`}>
+                                    {((results.revenue - results.cost) / (parseFloat(usdtSellRate) || 1)).toFixed(2)} USDT
                                 </div>
                                 <div className={`text-xs ${results.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                     {results.profitMargin.toFixed(2)}% {t('calculator.margin')}
