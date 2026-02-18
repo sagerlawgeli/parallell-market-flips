@@ -299,7 +299,8 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
         const message = i18n.language === 'ar'
             ? `📦 *تفاصيل المعاملة - ${displayId}*\n\n` +
             `🕒 *الحالة:* ${config.label}\n` +
-            `💰 *التكلفة:* ${formatCurrency(metrics.costLyd, 'LYD')}\n` +
+            `� *${t('calculator.amount')}:* ${formatCurrency(transaction.fiatAmount, transaction.type)}\n` +
+            `�💰 *التكلفة:* ${formatCurrency(metrics.costLyd, 'LYD')}\n` +
             `📈 *العائد:* ${formatCurrency(metrics.returnLyd, 'LYD')}\n` +
             `💵 *الربح:* ${metrics.profitLyd > 0 ? "+" : ""}${formatCurrency(metrics.profitLyd, 'LYD')}\n` +
             `🪙 *${t('calculator.usdtSurplus')}:* ${metrics.surplusUsdt.toFixed(2)} USDT\n` +
@@ -307,6 +308,7 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
             `🔗 *الرابط:* ${shareUrl}`
             : `📦 *Transaction Details - ${displayId}*\n\n` +
             `🕒 *Status:* ${config.label}\n` +
+            `💵 *${t('calculator.amount')}:* ${formatCurrency(transaction.fiatAmount, transaction.type)}\n` +
             `💰 *Cost:* ${formatCurrency(metrics.costLyd, 'LYD')}\n` +
             `📈 *Return:* ${formatCurrency(metrics.returnLyd, 'LYD')}\n` +
             `💵 *Profit:* ${metrics.profitLyd > 0 ? "+" : ""}${formatCurrency(metrics.profitLyd, 'LYD')}\n` +
