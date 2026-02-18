@@ -281,9 +281,6 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
         const baseUrl = window.location.origin
         const displayId = getDisplayId(transaction.seqId, transaction.paymentMethod)
         const shareUrl = `${baseUrl}/t/${displayId}`
-        // Preview URL uses the Supabase Edge Function to serve meta tags
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '')
-        const previewUrl = `${supabaseUrl}/functions/v1/transaction-preview?id=${displayId}`
 
         if (type === 'link') {
             // Open WhatsApp with just the URL
@@ -294,29 +291,28 @@ export function TransactionCard({ transaction, onStatusChange, readOnly = false 
             return
         }
 
-        const cost = transaction.fiatAmount * transaction.fiatRate
-        const returns = transaction.usdtAmount * transaction.usdtRate
         const date = new Date(transaction.createdAt).toLocaleString('en-US', {
             dateStyle: 'medium',
             timeStyle: 'short'
         })
 
-
         const message = i18n.language === 'ar'
             ? `📦 *تفاصيل المعاملة - ${displayId}*\n\n` +
-            `🕒 *الحالة:* ${t(`transaction.${transaction.status}`)}\n` +
-            `💰 *التكلفة:* ${formatCurrency(cost, 'LYD')}\n` +
-            `📈 *العائد:* ${formatCurrency(returns, 'LYD')}\n` +
-            `💵 *الربح:* ${formatCurrency(transaction.profit, 'LYD')}\n` +
+            `🕒 *الحالة:* ${config.label}\n` +
+            `💰 *التكلفة:* ${formatCurrency(metrics.costLyd, 'LYD')}\n` +
+            `📈 *العائد:* ${formatCurrency(metrics.returnLyd, 'LYD')}\n` +
+            `💵 *الربح:* ${metrics.profitLyd > 0 ? "+" : ""}${formatCurrency(metrics.profitLyd, 'LYD')}\n` +
+            `🪙 *${t('calculator.usdtSurplus')}:* ${metrics.surplusUsdt.toFixed(2)} USDT\n` +
             `📅 *التاريخ:* ${date}\n\n` +
-            `🔗 *الرابط:* ${previewUrl}`
+            `🔗 *الرابط:* ${shareUrl}`
             : `📦 *Transaction Details - ${displayId}*\n\n` +
-            `🕒 *Status:* ${t(`transaction.${transaction.status}`)}\n` +
-            `💰 *Cost:* ${formatCurrency(cost, 'LYD')}\n` +
-            `📈 *Return:* ${formatCurrency(returns, 'LYD')}\n` +
-            `💵 *Profit:* ${formatCurrency(transaction.profit, 'LYD')}\n` +
+            `🕒 *Status:* ${config.label}\n` +
+            `💰 *Cost:* ${formatCurrency(metrics.costLyd, 'LYD')}\n` +
+            `📈 *Return:* ${formatCurrency(metrics.returnLyd, 'LYD')}\n` +
+            `💵 *Profit:* ${metrics.profitLyd > 0 ? "+" : ""}${formatCurrency(metrics.profitLyd, 'LYD')}\n` +
+            `🪙 *${t('calculator.usdtSurplus')}:* ${metrics.surplusUsdt.toFixed(2)} USDT\n` +
             `📅 *Date:* ${date}\n\n` +
-            `🔗 *Link:* ${previewUrl}`
+            `🔗 *Link:* ${shareUrl}`
 
 
         // Open WhatsApp with pre-filled message
