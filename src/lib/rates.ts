@@ -1,10 +1,12 @@
 export async function getCryptoPrice(): Promise<number> {
     try {
         // 1. Try CoinGecko (USDT)
-        const proxyUrl = 'https://api.allorigins.win/raw?url='
         const targetUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=eur'
 
-        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl))
+        const response = await fetch(targetUrl)
+        if (!response.ok) {
+            throw new Error(`CoinGecko HTTP error! status: ${response.status}`)
+        }
         const data = await response.json()
 
         if (data.tether && data.tether.eur) {
@@ -31,9 +33,11 @@ export async function getCryptoPrice(): Promise<number> {
 
 export async function getForexRate(from: string, to: string): Promise<number> {
     try {
-        const proxyUrl = 'https://api.allorigins.win/raw?url='
         const targetUrl = `https://api.frankfurter.app/latest?from=${from}&to=${to}`
-        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl))
+        const response = await fetch(targetUrl)
+        if (!response.ok) {
+            throw new Error(`Frankfurter HTTP error! status: ${response.status}`)
+        }
         const data = await response.json()
         return data.rates[to]
     } catch (error) {
